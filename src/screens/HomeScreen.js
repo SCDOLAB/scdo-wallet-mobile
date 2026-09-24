@@ -83,16 +83,6 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.coinBalance}>{audtBalance}</Text>
         </View>
 
-        {/* Fiat on/off ramp buttons */}
-        <View style={styles.fiatRow}>
-          <TouchableOpacity style={styles.depositBtn} onPress={() => Alert.alert('Deposit AUD', 'Bank transfer details will be provided after KYC verification.')}>
-            <Text style={styles.fiatBtnText}>+ Deposit AUD</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.withdrawBtn} onPress={() => Alert.alert('Withdraw AUD', 'Bank transfer to your account. Coming soon.')}>
-            <Text style={styles.fiatBtnText}>− Withdraw AUD</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Address */}
         <View style={styles.addrBox}>
           <Text style={styles.addrLabel}>My Address</Text>
@@ -109,8 +99,8 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('Mine')}>
           <Text style={styles.navItem}>挖矿</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('KYC')}>
-          <Text style={styles.navItem}>KYC</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Backup')}>
+          <Text style={styles.navItem}>备份</Text>
         </TouchableOpacity>
       </View>
     </View>
