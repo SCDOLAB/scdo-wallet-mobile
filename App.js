@@ -3,10 +3,10 @@ global.Buffer = global.Buffer || Buffer;
 global.process = global.process || { env: {}, nextTick: (cb) => setTimeout(cb, 0) };
 import 'react-native-get-random-values';
 import * as secp from '@noble/secp256k1';
-import { hmac } from 'js-sha256';
+import { sha256 } from 'js-sha256';
 secp.utils.hmacSha256Sync = (key, ...msgs) => {
-  const h = hmac.create(key);
-  msgs.forEach(m => h.update(Buffer.from(m)));
+  const h = sha256.hmac.create(key);
+  msgs.forEach(m => h.update(m));
   return new Uint8Array(h.digest());
 };
 import React, { useEffect, useState } from 'react';
