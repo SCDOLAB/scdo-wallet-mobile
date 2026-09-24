@@ -54,7 +54,7 @@ async function sendWithRetry(chainId, txData, privKeyBytes, maxRetries = 3) {
         txData.Timestamp, txData.Payload,
       ]);
       const txHash = '0x' + keccak_256(encoded);
-      const sig = await secp.signAsync(Buffer.from(keccak_256(encoded), 'hex'), privKeyBytes);
+      const sig = secp.signSync(Buffer.from(keccak_256(encoded), 'hex'), privKeyBytes);
       const sigBytes = Buffer.concat([sig.toCompactRawBytes(), Buffer.from([sig.recovery])]);
       const base64Sig = bytesToBase64(sigBytes);
 
