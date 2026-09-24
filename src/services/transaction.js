@@ -97,9 +97,11 @@ async function sendWithRetry(shardId, txData, privKeyBytes, maxRetries = 3) {
         txData.Payload || '0x',
       ];
       const encoded = rlpEncode(list);
-      const txHash = '0x' + keccak_256(encoded);
-
-      const hashBytes = hexToBytes(keccak_256(encoded));
+      // Convert Uint8Array to plain array for js-sha3 (Hermes compat)
+      const arr = Array.from(encoded);
+      const hashHex = keccak_256(arr);
+      const txHash = '0x' + hashHex;
+      const hashBytes = hexToBytes(hashHex);
       const [sigBytes, recovery] = secp.signSync(hashBytes, privKeyBytes, { recovered: true });
       const sigBuf = new Uint8Array(sigBytes.length + 1);
       sigBuf.set(sigBytes);
