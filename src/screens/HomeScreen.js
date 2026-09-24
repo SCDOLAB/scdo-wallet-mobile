@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadAddress, loadPublicKey } from '../services/wallet';
+import { loadAddress } from '../services/wallet';
 import { getBalance, getTokenBalance, TOKENS } from '../services/scdo';
 
 export default function HomeScreen({ navigation }) {
@@ -18,16 +18,14 @@ export default function HomeScreen({ navigation }) {
 
   async function loadWallet() {
     const addr = await loadAddress();
-    const pubKey = await loadPublicKey();
-    if (addr) { setAddress(addr); refreshBalance(pubKey, addr); }
+    if (addr) { setAddress(addr); refreshBalance(addr); }
   }
 
-  async function refreshBalance(pubKey, addr) {
+  async function refreshBalance(addr) {
     const target = addr || address;
-    const pk = pubKey || await loadPublicKey();
     if (!target) return;
     try {
-      setBalance(await getBalance(pk, target));
+      setBalance(await getBalance(target));
       const audt = await getTokenBalance(TOKENS.AUDT, target);
       setAudtBalance(audt.toFixed(2));
     } catch (e) { console.log('balance error', e); }

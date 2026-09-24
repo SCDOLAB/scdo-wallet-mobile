@@ -7,7 +7,6 @@ const SHARDS = [
   { id: 4, rpc: 'http://74.208.207.184:8036' },
 ];
 
-// Known token contracts
 export const TOKENS = {
   AUDT: '1S01ecf66d7b027847e75c2b4425d6a805a5bc5261',
 };
@@ -28,20 +27,19 @@ export async function rpc(shardId, method, params = []) {
   return data.result;
 }
 
-// getBalance and getAccountNonce require PUBLIC KEY (hex), not address
-export async function getBalance(pubKey, address) {
+// getBalance and getAccountNonce take the 1S... address
+export async function getBalance(address) {
   const shard = getShardFromAddress(address);
-  const result = await rpc(shard, 'scdo_getBalance', [pubKey, '', -1]);
+  const result = await rpc(shard, 'scdo_getBalance', [address, '', -1]);
   const balance = result.Balance || 0;
   return (Number(balance) / 1e8).toFixed(8);
 }
 
-export async function getNonce(pubKey, address) {
+export async function getNonce(address) {
   const shard = getShardFromAddress(address);
-  return await rpc(shard, 'scdo_getAccountNonce', [pubKey, '', -1]);
+  return await rpc(shard, 'scdo_getAccountNonce', [address, '', -1]);
 }
 
-// Call contract balanceOf for ERC20 tokens
 export async function getTokenBalance(contractAddress, userAddress) {
   const shard = getShardFromAddress(contractAddress);
   const addrHex = userAddress.slice(2);
