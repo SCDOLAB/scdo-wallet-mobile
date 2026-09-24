@@ -32,15 +32,22 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#E94D5F" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F1115' }}>
+        <ActivityIndicator size="large" color="#4CAF50" />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={walletReady ? 'Home' : 'CreateWallet'}>
+      <Stack.Navigator
+        initialRouteName={walletReady ? 'Home' : 'CreateWallet'}
+        screenOptions={{
+          headerStyle: { backgroundColor: '#0F1115' },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: '600' },
+        }}
+      >
         <Stack.Screen name="CreateWallet" component={CreateWalletScreen} options={{ title: 'Create Wallet' }} />
         <Stack.Screen name="ImportWallet" component={ImportWalletScreen} options={{ title: 'Import Wallet' }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'SCDO Wallet' }} />
