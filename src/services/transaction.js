@@ -94,60 +94,91 @@ function signData(data, privateKeyHex) {
   return { hash, sigBase64 };
 }
 
+// Local nonce tracker to handle pending transactions
+let localNonce = null;
+
 export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO) {
-  const nonce = await getNonce(fromAddress);
+  const chainNonce = await getNonce(fromAddress);
   const value = Math.floor(parseFloat(amountSCDO) * 1e8);
   const fromShard = parseInt(fromAddress[0]);
 
-  const data = {
-    Type: 0,
-    From: toHexAddr(fromAddress),
-    To: toHexAddr(toAddress),
-    Amount: value,
-    AccountNonce: nonce + 1,
-    GasPrice: 1,
-    GasLimit: 21000,
-    Timestamp: 0,
-    Payload: null,
-  };
+  // Use local nonce if it's ahead of chain nonce (pending txs)
+  if (localNonce === null || localNonce <= chainNonce) {
+    localNonce = chainNonce;
+  }
 
-  const { hash, sigBase64 } = signData(data, privateKeyHex);
+  // Try up to 3 times with increasing nonce
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const useNonce = localNonce + 1 + attempt;
+    const data = {
+      Type: 0,
+      From: toHexAddr(fromAddress),
+      To: toHexAddr(toAddress),
+      Amount: value,
+      AccountNonce: useNonce,
+      GasPrice: 1,
+      GasLimit: 21000,
+      Timestamp: 0,
+      Payload: null,
+    };
 
-  const signedTx = {
-    Hash: '0x' + hash,
-    Data: data,
-    Signature: { Sig: sigBase64 },
-  };
+    const { hash, sigBase64 } = signData(data, privateKeyHex);
+    const signedTx = {
+      Hash: '0x' + hash,
+      Data: data,
+      Signature: { Sig: sigBase64 },
+    };
 
-  return await broadcastTx(signedTx, fromShard);
+    try {
+      const result = await broadcastTx(signedTx, fromShard);
+      localNonce = useNonce;
+      return result;
+    } catch (e) {
+      if (e.message.includes('nonce') && attempt < 2) continue;
+      throw e;
+    }
+  }
 }
 
 export async function sendToken(privateKeyHex, fromAddress, toAddress, amountToken, contractAddress) {
-  const nonce = await getNonce(fromAddress);
+  const chainNonce = await getNonce(fromAddress);
   const fromShard = parseInt(fromAddress[0]);
+
+  if (localNonce === null || localNonce <= chainNonce) {
+    localNonce = chainNonce;
+  }
 
   const amount = Math.floor(parseFloat(amountToken) * 1e8);
   const payload = '0x' + 'a9059cbb' + toAddress.slice(3).padStart(64, '0') + amount.toString(16).padStart(64, '0');
 
-  const data = {
-    Type: 0,
-    From: toHexAddr(fromAddress),
-    To: toHexAddr(contractAddress),
-    Amount: 0,
-    AccountNonce: nonce + 1,
-    GasPrice: 1,
-    GasLimit: 100000,
-    Timestamp: 0,
-    Payload: payload,
-  };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const useNonce = localNonce + 1 + attempt;
+    const data = {
+      Type: 0,
+      From: toHexAddr(fromAddress),
+      To: toHexAddr(contractAddress),
+      Amount: 0,
+      AccountNonce: useNonce,
+      GasPrice: 1,
+      GasLimit: 100000,
+      Timestamp: 0,
+      Payload: payload,
+    };
 
-  const { hash, sigBase64 } = signData(data, privateKeyHex);
+    const { hash, sigBase64 } = signData(data, privateKeyHex);
+    const signedTx = {
+      Hash: '0x' + hash,
+      Data: data,
+      Signature: { Sig: sigBase64 },
+    };
 
-  const signedTx = {
-    Hash: '0x' + hash,
-    Data: data,
-    Signature: { Sig: sigBase64 },
-  };
-
-  return await broadcastTx(signedTx, fromShard);
+    try {
+      const result = await broadcastTx(signedTx, fromShard);
+      localNonce = useNonce;
+      return result;
+    } catch (e) {
+      if (e.message.includes('nonce') && attempt < 2) continue;
+      throw e;
+    }
+  }
 }
