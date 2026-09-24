@@ -10,33 +10,51 @@ function toHexAddr(addr) {
   return '0x0' + addr.slice(3);
 }
 
+// Manual hex to bytes
+function hexToBytes(hex) {
+  hex = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = parseInt(hex.substr(i * 2, 2), 16);
+  }
+  return arr;
+}
+
+// Bytes to base64
+function bytesToBase64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
 // Minimal RLP encoder
 function encodeSingle(item) {
-  if (item === null || item === undefined) return Buffer.from([128]);
+  if (item === null || item === undefined) return [128];
   if (typeof item === 'number') {
-    if (item === 0) return Buffer.from([128]);
+    if (item === 0) return [128];
     const hex = item.toString(16);
-    const buf = Buffer.from(hex.length % 2 ? '0' + hex : hex, 'hex');
-    if (buf.length === 1 && buf[0] < 128) return buf;
-    return Buffer.concat([Buffer.from([128 + buf.length]), buf]);
+    const padded = hex.length % 2 ? '0' + hex : hex;
+    const bytes = hexToBytes(padded);
+    if (bytes.length === 1 && bytes[0] < 128) return [bytes[0]];
+    return [128 + bytes.length, ...bytes];
   }
   if (typeof item === 'string') {
-    const hex = item.startsWith('0x') ? item.slice(2) : item;
-    const buf = Buffer.from(hex, 'hex');
-    if (buf.length === 1 && buf[0] < 128) return buf;
-    return Buffer.concat([Buffer.from([128 + buf.length]), buf]);
+    const bytes = hexToBytes(item);
+    if (bytes.length === 1 && bytes[0] < 128) return [bytes[0]];
+    return [128 + bytes.length, ...bytes];
   }
-  return Buffer.from([128]);
+  return [128];
 }
 
 function rlpEncode(items) {
-  const payload = Buffer.concat(items.map(encodeSingle));
+  const payload = [];
+  for (const item of items) payload.push(...encodeSingle(item));
   if (payload.length < 56) {
-    return Buffer.concat([Buffer.from([192 + payload.length]), payload]);
+    return new Uint8Array([192 + payload.length, ...payload]);
   }
   const lenHex = payload.length.toString(16);
-  const lenBuf = Buffer.from(lenHex, 'hex');
-  return Buffer.concat([Buffer.from([247 + lenBuf.length]), lenBuf, payload]);
+  const lenBytes = Array.from(hexToBytes(lenHex));
+  return new Uint8Array([247 + lenBytes.length, ...lenBytes, ...payload]);
 }
 
 async function broadcastTx(signedTx, fromShard) {
@@ -57,11 +75,13 @@ function signData(data, privateKeyHex) {
   ];
   const encoded = rlpEncode(infoList);
   const hash = keccak_256(encoded);
+  const hashBytes = hexToBytes(hash);
 
-  const priv = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
-  const hashBuf = Buffer.from(hash, 'hex');
-  const [sigBytes, recovery] = secp.signSync(hashBuf, priv, { der: false, recovered: true });
-  const sigBase64 = Buffer.concat([Buffer.from(sigBytes), Buffer.from([recovery])]).toString('base64');
+  const privBytes = hexToBytes(privateKeyHex);
+  const [sigBytes, recovery] = secp.signSync(hashBytes, privBytes, { der: false, recovered: true });
+  const sigBytesArr = new Uint8Array(sigBytes);
+  const sigWithV = new Uint8Array([...sigBytesArr, recovery]);
+  const sigBase64 = bytesToBase64(sigWithV);
   return { hash, sigBase64 };
 }
 
