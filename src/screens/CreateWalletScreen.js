@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { createWallet, savePrivateKey, getAddressFromPublicKey } from '../services/wallet';
+import { createWallet, saveWallet } from '../services/wallet';
 
 export default function CreateWalletScreen({ navigation }) {
   const [pin, setPin] = useState('');
@@ -19,9 +19,8 @@ export default function CreateWalletScreen({ navigation }) {
     setLoading(true);
     try {
       const wallet = await createWallet();
-      await savePrivateKey(wallet.privateKey);
-      const address = await getAddressFromPublicKey(wallet.publicKey);
-      Alert.alert('Success', `Wallet created!\nAddress: ${address}\n\nIMPORTANT: Back up your private key!`, [
+      await saveWallet(wallet.privateKey, wallet.address);
+      Alert.alert('Success', `Wallet created!\nAddress: ${wallet.address}\n\nIMPORTANT: Back up your private key!`, [
         { text: 'OK', onPress: () => navigation.replace('Home') },
       ]);
     } catch (e) {

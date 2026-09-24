@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Share } from 'react-native';
-import { loadPrivateKey, getAddressFromPublicKey } from '../services/wallet';
+import { loadAddress } from '../services/wallet';
 
 export default function ReceiveScreen() {
   const [address, setAddress] = useState('');
 
-  useEffect(() => { loadAddr(); }, []);
+  useEffect(() => {
+    loadAddr();
+  }, []);
 
   async function loadAddr() {
-    // TODO: derive address from stored private key
-    // For now placeholder
-    setAddress('1S012134572b51efcce9e4696d18a04c9b9b8b0af1');
+    const addr = await loadAddress();
+    if (addr) setAddress(addr);
   }
 
   async function shareAddress() {

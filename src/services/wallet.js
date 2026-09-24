@@ -1,30 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Keychain from 'react-native-keychain';
 import * as SecureStore from 'expo-secure-store';
 
 const STORAGE_KEY = '@scdo_wallet';
 
-// Generate a new private key (uses scdo.js SDK)
+// Generate a new wallet
 export async function createWallet() {
   const Scdo = require('scdo.js');
   const client = new Scdo();
   const keypair = client.wallet.create();
   return {
     privateKey: keypair.privatekey,
-    publicKey: keypair.publickey,
+    address: keypair.publickey, // already in display format e.g. "1S01..."
   };
 }
 
-// Get shard number from public key
-export async function getShardNum(publicKey) {
-  const Scdo = require('scdo.js');
-  const client = new Scdo();
-  return client.wallet.getshardnum(publicKey);
-}
-
-// Save private key securely
-export async function savePrivateKey(privateKey) {
+// Save wallet (private key + address) securely
+export async function saveWallet(privateKey, address) {
   await SecureStore.setItemAsync('scdo_privkey', privateKey);
+  await SecureStore.setItemAsync('scdo_address', address);
 }
 
 // Load private key
@@ -32,9 +25,15 @@ export async function loadPrivateKey() {
   return await SecureStore.getItemAsync('scdo_privkey');
 }
 
+// Load saved address
+export async function loadAddress() {
+  return await SecureStore.getItemAsync('scdo_address');
+}
+
 // Delete wallet
 export async function deleteWallet() {
   await SecureStore.deleteItemAsync('scdo_privkey');
+  await SecureStore.deleteItemAsync('scdo_address');
   await AsyncStorage.removeItem(STORAGE_KEY);
 }
 
@@ -42,15 +41,6 @@ export async function deleteWallet() {
 export async function hasWallet() {
   const key = await SecureStore.getItemAsync('scdo_privkey');
   return !!key;
-}
-
-// Derive address from public key (display format)
-export async function getAddressFromPublicKey(publicKey) {
-  const Scdo = require('scdo.js');
-  const client = new Scdo();
-  const shard = client.wallet.getshardnum(publicKey);
-  const clean = publicKey.replace(/^0x/, '');
-  return `${shard}S${clean}`;
 }
 
 // Sign and prepare transaction
