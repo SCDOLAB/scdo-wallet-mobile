@@ -97,8 +97,8 @@ function signData(data, privateKeyHex) {
 // Local nonce tracker to handle pending transactions
 let localNonce = null;
 
-export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO) {
-  const chainNonce = await getNonce(fromAddress);
+export async function sendSCDO(privateKeyHex, publicKeyHex, fromAddress, toAddress, amountSCDO) {
+  const chainNonce = await getNonce(publicKeyHex, fromAddress);
   const value = Math.floor(parseFloat(amountSCDO) * 1e8);
   const fromShard = parseInt(fromAddress[0]);
 
@@ -140,8 +140,8 @@ export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO
   }
 }
 
-export async function sendToken(privateKeyHex, fromAddress, toAddress, amountToken, contractAddress) {
-  const chainNonce = await getNonce(fromAddress);
+export async function sendToken(privateKeyHex, publicKeyHex, fromAddress, toAddress, amountToken, contractAddress) {
+  const chainNonce = await getNonce(publicKeyHex, fromAddress);
   const fromShard = parseInt(fromAddress[0]);
 
   if (localNonce === null || localNonce <= chainNonce) {

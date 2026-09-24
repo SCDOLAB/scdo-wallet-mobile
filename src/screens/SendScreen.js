@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadPrivateKey, loadAddress } from '../services/wallet';
+import { loadPrivateKey, loadPublicKey, loadAddress } from '../services/wallet';
 import { sendSCDO, sendToken } from '../services/transaction';
 import { TOKENS } from '../services/scdo';
 
@@ -34,12 +34,13 @@ export default function SendScreen() {
     setSending(true);
     try {
       const privKey = await loadPrivateKey();
+      const pubKey = await loadPublicKey();
       const from = await loadAddress();
       let txHash;
       if (token === 'SCDO') {
-        txHash = await sendSCDO(privKey, from, to, amount);
+        txHash = await sendSCDO(privKey, pubKey, from, to, amount);
       } else {
-        txHash = await sendToken(privKey, from, to, amount, TOKENS.AUDT);
+        txHash = await sendToken(privKey, pubKey, from, to, amount, TOKENS.AUDT);
       }
 
       // Save to local history

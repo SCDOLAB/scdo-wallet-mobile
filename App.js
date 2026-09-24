@@ -30,7 +30,7 @@ import KycScreen from './src/screens/KycScreen';
 import TxHistoryScreen from './src/screens/TxHistoryScreen';
 import BackupScreen from './src/screens/BackupScreen';
 import MineScreen from './src/screens/MineScreen';
-import { hasWallet } from './src/services/wallet';
+import { hasWallet, loadPrivateKey, loadPublicKey, loadAddress, saveWallet } from './src/services/wallet';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +44,21 @@ export default function App() {
 
   async function checkWallet() {
     const exists = await hasWallet();
+    if (exists) {
+      // Migration: derive and save public key if missing
+      let pubKey = await loadPublicKey();
+      if (!pubKey) {
+        const privKey = await loadPrivateKey();
+        const addr = await loadAddress();
+        if (privKey) {
+          const privBytes = Buffer.from(privKey.replace('0x', ''), 'hex');
+          const pubBytes = secp.getPublicKey(privBytes, false);
+          pubKey = '0x' + Buffer.from(pubBytes).toString('hex');
+          await saveWallet(privKey, pubKey, addr);
+          console.log('Public key migrated');
+        }
+      }
+    }
     setWalletReady(exists);
     setLoading(false);
   }

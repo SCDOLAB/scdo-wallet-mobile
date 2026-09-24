@@ -28,23 +28,17 @@ export async function rpc(shardId, method, params = []) {
   return data.result;
 }
 
-export async function getBalance(address) {
+// getBalance and getAccountNonce require PUBLIC KEY (hex), not address
+export async function getBalance(pubKey, address) {
   const shard = getShardFromAddress(address);
-  const result = await rpc(shard, 'scdo_getBalance', [address, '', -1]);
+  const result = await rpc(shard, 'scdo_getBalance', [pubKey, '', -1]);
   const balance = result.Balance || 0;
   return (Number(balance) / 1e8).toFixed(8);
 }
 
-export async function getNonce(address) {
+export async function getNonce(pubKey, address) {
   const shard = getShardFromAddress(address);
-  return await rpc(shard, 'scdo_getAccountNonce', [address, '', -1]);
-}
-
-export async function getTransactions(address) {
-  const shard = getShardFromAddress(address);
-  const sent = await rpc(shard, 'scdo_getTransactionsFrom', [address, '', -1]);
-  const received = await rpc(shard, 'scdo_getTransactionsTo', [address, '', -1]);
-  return [...(sent || []), ...(received || [])];
+  return await rpc(shard, 'scdo_getAccountNonce', [pubKey, '', -1]);
 }
 
 // Call contract balanceOf for ERC20 tokens

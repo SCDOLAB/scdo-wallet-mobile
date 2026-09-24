@@ -19,7 +19,7 @@ export default function CreateWalletScreen({ navigation }) {
     setLoading(true);
     try {
       const wallet = await createWallet();
-      await saveWallet(wallet.privateKey, wallet.address);
+      await saveWallet(wallet.privateKey, wallet.publicKey, wallet.address);
       Alert.alert('Wallet Created!', `Your new address:\n${wallet.address}\n\n⚠️ Back up your private key now!`, [
         { text: 'I Have Backed Up', onPress: () => navigation.replace('Home') },
       ]);
