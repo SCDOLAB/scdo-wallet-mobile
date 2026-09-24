@@ -7,7 +7,7 @@ import { getNonce } from './scdo';
 const RPC_PORTS = { 1: 8037, 2: 8038, 3: 8039, 4: 8036 };
 
 function toHexAddr(addr) {
-  return '0x0' + addr.slice(3);
+  return '0x' + addr.slice(2);
 }
 
 // Manual hex to bytes
