@@ -4,7 +4,7 @@ import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
 
 export async function createWallet() {
-  const privKeyBytes = secp.utils.randomSecretKey();
+  const privKeyBytes = secp.utils.randomPrivateKey();
   const privateKey = '0x' + Buffer.from(privKeyBytes).toString('hex');
 
   const pubKeyBytes = secp.getPublicKey(privKeyBytes, false);
