@@ -12,10 +12,6 @@ function hexToBytes(hex) {
   return result;
 }
 
-function bytesToHex(bytes) {
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 function numberToBytes(n) {
   if (!n) return new Uint8Array(0);
   let hex = n.toString(16);
@@ -23,26 +19,12 @@ function numberToBytes(n) {
   return hexToBytes(hex);
 }
 
-function rlpEncode(input) {
-  if (input === null || input === undefined) return new Uint8Array(0);
-  if (typeof input === 'number' || typeof input === 'bigint') {
-    return rlpEncode(numberToBytes(Number(input)));
-  }
-  if (typeof input === 'string') {
-    if (input.startsWith('0x')) {
-      return rlpEncode(hexToBytes(input));
-    }
-    return rlpEncode(new TextEncoder().encode(input));
-  }
-  if (input instanceof Uint8Array) {
-    if (input.length === 1 && input[0] < 0x80) return input;
-    return concatBytes(encodeLength(0x80, input.length), input);
-  }
-  if (Array.isArray(input)) {
-    const payload = concatBytes(...input.map(rlpEncode));
-    return concatBytes(encodeLength(0xc0, payload.length), payload);
-  }
-  return new Uint8Array(0);
+function concatBytes(...arrays) {
+  const total = arrays.reduce((s, a) => s + a.length, 0);
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const arr of arrays) { result.set(arr, offset); offset += arr.length; }
+  return result;
 }
 
 function encodeLength(offset, len) {
@@ -54,15 +36,22 @@ function encodeLength(offset, len) {
   return result;
 }
 
-function concatBytes(...arrays) {
-  const total = arrays.reduce((s, a) => s + a.length, 0);
-  const result = new Uint8Array(total);
-  let offset = 0;
-  for (const arr of arrays) {
-    result.set(arr, offset);
-    offset += arr.length;
+function rlpEncode(input) {
+  if (input === null || input === undefined) return new Uint8Array(0);
+  if (typeof input === 'number') return rlpEncode(numberToBytes(input));
+  if (typeof input === 'string') {
+    if (input.startsWith('0x')) return rlpEncode(hexToBytes(input));
+    return rlpEncode(new TextEncoder().encode(input));
   }
-  return result;
+  if (input instanceof Uint8Array) {
+    if (input.length === 1 && input[0] < 0x80) return input;
+    return concatBytes(encodeLength(0x80, input.length), input);
+  }
+  if (Array.isArray(input)) {
+    const payload = concatBytes(...input.map(rlpEncode));
+    return concatBytes(encodeLength(0xc0, payload.length), payload);
+  }
+  return new Uint8Array(0);
 }
 
 function bytesToBase64(bytes) {
@@ -78,7 +67,8 @@ function bytesToBase64(bytes) {
   return result;
 }
 
-function toHexAddr(addr) {
+// Convert SCDO human address (1S...) to 0x format for transaction RLP
+function toTxAddr(addr) {
   return '0x' + addr.slice(2);
 }
 
@@ -86,21 +76,15 @@ async function sendWithRetry(shardId, txData, privKeyBytes, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const list = [
-        txData.Type,
-        txData.From,
-        txData.To,
-        txData.Amount,
-        txData.AccountNonce,
-        txData.GasPrice,
-        txData.GasLimit,
-        txData.Timestamp,
-        txData.Payload || '0x',
+        txData.Type, txData.From, txData.To, txData.Amount,
+        txData.AccountNonce, txData.GasPrice, txData.GasLimit,
+        txData.Timestamp, txData.Payload || '0x',
       ];
       const encoded = rlpEncode(list);
-      // Convert Uint8Array to plain array for js-sha3 (Hermes compat)
       const arr = Array.from(encoded);
       const hashHex = keccak_256(arr);
       const txHash = '0x' + hashHex;
+
       const hashBytes = hexToBytes(hashHex);
       const [sigBytes, recovery] = secp.signSync(hashBytes, privKeyBytes, { recovered: true });
       const sigBuf = new Uint8Array(sigBytes.length + 1);
@@ -132,8 +116,8 @@ export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO
 
   const txData = {
     Type: 0,
-    From: toHexAddr(fromAddress),
-    To: toHexAddr(toAddress),
+    From: toTxAddr(fromAddress),
+    To: toTxAddr(toAddress),
     Amount: Math.floor(parseFloat(amountSCDO) * 1e8),
     AccountNonce: nonce,
     GasPrice: 1,
@@ -151,14 +135,14 @@ export async function sendToken(privateKeyHex, fromAddress, toAddress, amountTok
   const nonce = chainNonce + 1;
   const shard = getShardFromAddress(contractAddress);
 
-  const toTokenAddr = toHexAddr(toAddress).slice(2);
+  const toTokenAddr = toTxAddr(toAddress).slice(2);
   const amountHex = Math.floor(parseFloat(amountToken) * 1e8).toString(16).padStart(64, '0');
   const payload = '0xa9059cbb' + toTokenAddr.padStart(64, '0') + amountHex;
 
   const txData = {
     Type: 0,
-    From: toHexAddr(fromAddress),
-    To: toHexAddr(contractAddress),
+    From: toTxAddr(fromAddress),
+    To: toTxAddr(contractAddress),
     Amount: 0,
     AccountNonce: nonce,
     GasPrice: 1,
