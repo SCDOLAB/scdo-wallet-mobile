@@ -7,6 +7,11 @@ const SHARDS = [
   { id: 4, rpc: 'http://74.208.207.184:8036' },
 ];
 
+// Known token contracts
+export const TOKENS = {
+  AUDT: '1S01ecf66d7b027847e75c2b4425d6a805a5bc5261',
+};
+
 export function getShardFromAddress(address) {
   return parseInt(address.substring(0, 1));
 }
@@ -40,4 +45,16 @@ export async function getTransactions(address) {
   const sent = await rpc(shard, 'scdo_getTransactionsFrom', [address, '', -1]);
   const received = await rpc(shard, 'scdo_getTransactionsTo', [address, '', -1]);
   return [...(sent || []), ...(received || [])];
+}
+
+// Call contract balanceOf for ERC20 tokens
+export async function getTokenBalance(contractAddress, userAddress) {
+  const shard = getShardFromAddress(contractAddress);
+  const addrHex = userAddress.slice(2);
+  const data = '0x70a08231' + addrHex.padStart(64, '0');
+  try {
+    const result = await rpc(shard, 'scdo_call', [contractAddress, data, -1]);
+    if (!result.result || result.result === '0x') return 0;
+    return parseInt(result.result, 16) / 1e8;
+  } catch (e) { return 0; }
 }

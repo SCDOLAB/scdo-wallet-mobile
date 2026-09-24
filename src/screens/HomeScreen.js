@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { loadAddress } from '../services/wallet';
-import { getBalance } from '../services/scdo';
+import { getBalance, getTokenBalance, TOKENS } from '../services/scdo';
 
 export default function HomeScreen({ navigation }) {
   const [address, setAddress] = useState('');
   const [balance, setBalance] = useState('0.00000000');
+  const [audtBalance, setAudtBalance] = useState('0.00');
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => { loadWallet(); }, []);
@@ -18,7 +19,11 @@ export default function HomeScreen({ navigation }) {
   async function refreshBalance(addr) {
     const target = addr || address;
     if (!target) return;
-    try { setBalance(await getBalance(target)); } catch (e) {}
+    try {
+      setBalance(await getBalance(target));
+      const audt = await getTokenBalance(TOKENS.AUDT, target);
+      setAudtBalance(audt.toFixed(2));
+    } catch (e) {}
   }
 
   const onRefresh = useCallback(async () => {
@@ -75,7 +80,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.coinName}>AUDt</Text>
             <Text style={styles.coinSub}>AUD Stablecoin</Text>
           </View>
-          <Text style={styles.coinBalance}>0.00</Text>
+          <Text style={styles.coinBalance}>{audtBalance}</Text>
         </View>
 
         {/* Fiat on/off ramp buttons */}
