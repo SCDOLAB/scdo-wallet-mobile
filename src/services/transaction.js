@@ -99,6 +99,13 @@ export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO
   const value = Math.floor(parseFloat(amountSCDO) * 1e8);
   const fromShard = parseInt(fromAddress[0]);
 
+  // Debug: derive address from private key
+  const privBytes = hexToBytes(privateKeyHex);
+  const pubBytes = secp.getPublicKey(privBytes, false);
+  const pubHex = Buffer.from(pubBytes).toString('hex').slice(2);
+  const addrHash = keccak_256(Buffer.from(pubHex, 'hex'));
+  const derivedHex = '0x' + addrHash.slice(-40);
+
   const data = {
     Type: 0,
     From: toHexAddr(fromAddress),
@@ -112,6 +119,14 @@ export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO
   };
 
   const { hash, sigBase64 } = signData(data, privateKeyHex);
+
+  const { Alert } = require('react-native');
+  Alert.alert('Debug',
+    'Stored From: ' + data.From +
+    '\nDerived From: ' + derivedHex +
+    '\nMatch: ' + (data.From === derivedHex) +
+    '\nNonce: ' + nonce + '->' + (nonce+1)
+  );
 
   const signedTx = {
     Hash: '0x' + hash,
