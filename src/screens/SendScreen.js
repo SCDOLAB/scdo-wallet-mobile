@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { Camera } from 'expo-camera';
+import { CameraView, Camera } from 'expo-camera';
 import { loadPrivateKey, loadAddress } from '../services/wallet';
 import { signAndSend } from '../services/transaction';
 
@@ -15,7 +15,7 @@ export default function SendScreen() {
     if (status === 'granted') setScanning(true);
   }
 
-  async function onBarCodeRead({ data }) {
+  function onBarcodeScanned({ data }) {
     setTo(data);
     setScanning(false);
   }
@@ -37,7 +37,7 @@ export default function SendScreen() {
   if (scanning) {
     return (
       <View style={{ flex: 1 }}>
-        <Camera style={{ flex: 1 }} onBarCodeScanned={onBarCodeRead} barCodeScannerSettings={{ barCodeTypes: ['qr'] }} />
+        <CameraView style={{ flex: 1 }} onBarcodeScanned={onBarcodeScanned} barcodeSettings={{ codeTypes: ['qr'] }} />
         <TouchableOpacity style={styles.closeScan} onPress={() => setScanning(false)}>
           <Text style={styles.closeText}>Cancel</Text>
         </TouchableOpacity>
