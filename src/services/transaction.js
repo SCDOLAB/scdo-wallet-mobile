@@ -38,10 +38,9 @@ function buildRawTx(nonce, gasPrice, gasLimit, toBytes, value, fromShard, toShar
 async function signAndSendTx(rawTx, privKeyBytes) {
   const encoded = rlp.encode(rawTx);
   const hash = Buffer.from(keccak_256(encoded), 'hex');
-  const sig = secp.signSync(hash, privKeyBytes);
-  const v = sig[64];
-  const r = Buffer.from(sig.slice(0, 32));
-  const s = Buffer.from(sig.slice(32, 64));
+  const [sigBytes, v] = secp.signSync(hash, privKeyBytes, { der: false, recovered: true });
+  const r = Buffer.from(sigBytes.slice(0, 32));
+  const s = Buffer.from(sigBytes.slice(32, 64));
   return [...rawTx, Buffer.from([27 + v]), r, s];
 }
 

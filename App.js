@@ -1,6 +1,13 @@
 import { Buffer } from 'buffer';
 global.Buffer = global.Buffer || Buffer;
 import 'react-native-get-random-values';
+import * as secp from '@noble/secp256k1';
+import { hmac } from 'js-sha256';
+secp.utils.hmacSha256Sync = (key, ...msgs) => {
+  const h = hmac.create(key);
+  msgs.forEach(m => h.update(m));
+  return new Uint8Array(h.digest());
+};
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
