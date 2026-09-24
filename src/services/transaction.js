@@ -25,14 +25,14 @@ async function sendWithRetry(shardId, txData, privKeyBytes, maxRetries = 3) {
     try {
       const list = [
         txData.Type,
-        Buffer.from(txData.From.slice(2), 'hex'),
-        Buffer.from(txData.To.slice(2), 'hex'),
+        txData.From,
+        txData.To,
         txData.Amount,
         txData.AccountNonce,
         txData.GasPrice,
         txData.GasLimit,
         txData.Timestamp,
-        txData.Payload ? Buffer.from(txData.Payload.slice(2), 'hex') : Buffer.from([]),
+        txData.Payload || '0x',
       ];
       const encoded = RLP.encode(list);
       const txHash = '0x' + keccak_256(encoded);
