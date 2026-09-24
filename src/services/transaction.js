@@ -1,78 +1,97 @@
 import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
 import rlp from 'rlp';
-import { getNonce, getShardFromAddress } from './scdo';
+import { getNonce } from './scdo';
 
 const RPC_PORTS = { 1: 8037, 2: 8038, 3: 8039, 4: 8036 };
 
-function toBuffer(n) {
-  if (!n || n === 0) return Buffer.from([]);
-  return Buffer.from(n.toString(16).padStart(64, '0'), 'hex');
+function toHexAddr(addr) {
+  return '0x0' + addr.slice(3);
 }
 
-async function broadcast(rawTx, fromShard) {
-  const serialized = '0x' + rlp.encode(rawTx).toString('hex');
+async function broadcastTx(signedTx, fromShard) {
   const res = await fetch(`http://74.208.207.184:${RPC_PORTS[fromShard]}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', method: 'scdo_addTx', params: [serialized], id: 1 }),
+    body: JSON.stringify({ jsonrpc: '2.0', method: 'scdo_addTx', params: [signedTx], id: 1 }),
   });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   return data.result;
 }
 
-function buildRawTx(nonce, gasPrice, gasLimit, toBytes, value, fromShard, toShard, dataHex) {
-  return [
-    toBuffer(nonce),
-    toBuffer(gasPrice),
-    toBuffer(gasLimit),
-    toBytes,
-    toBuffer(value),
-    Buffer.from([fromShard]),
-    Buffer.from([toShard]),
-    Buffer.from(dataHex, 'hex'),
-  ];
-}
-
-async function signAndSendTx(rawTx, privKeyBytes) {
-  const encoded = rlp.encode(rawTx);
-  const hash = Buffer.from(keccak_256(encoded), 'hex');
-  const [sigBytes, v] = secp.signSync(hash, privKeyBytes, { der: false, recovered: true });
-  const r = Buffer.from(sigBytes.slice(0, 32));
-  const s = Buffer.from(sigBytes.slice(32, 64));
-  return [...rawTx, Buffer.from([27 + v]), r, s];
-}
-
-// Send native SCDO
 export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO) {
-  const privKeyBytes = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
   const nonce = await getNonce(fromAddress);
   const value = Math.floor(parseFloat(amountSCDO) * 1e8);
-  const fromShard = getShardFromAddress(fromAddress);
-  const toShard = getShardFromAddress(toAddress);
-  const toBytes = Buffer.from(toAddress.slice(2), 'hex');
+  const fromShard = parseInt(fromAddress[1]);
 
-  const rawTx = buildRawTx(nonce, 1, 21000, toBytes, value, fromShard, toShard, '');
-  const signed = await signAndSendTx(rawTx, privKeyBytes);
-  return await broadcast(signed, fromShard);
+  const data = {
+    Type: 0,
+    From: toHexAddr(fromAddress),
+    To: toHexAddr(toAddress),
+    Amount: value,
+    AccountNonce: nonce + 1,
+    GasPrice: 1,
+    GasLimit: 21000,
+    Timestamp: 0,
+    Payload: null,
+  };
+
+  const infoList = [
+    data.Type, data.From, data.To, data.Amount, data.AccountNonce,
+    data.GasPrice, data.GasLimit, data.Timestamp, data.Payload,
+  ];
+  const hash = keccak_256(rlp.encode(infoList));
+
+  const priv = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
+  const hashBuf = Buffer.from(hash, 'hex');
+  const [sigBytes, recovery] = secp.signSync(hashBuf, priv, { der: false, recovered: true });
+  const sigBase64 = Buffer.concat([Buffer.from(sigBytes), Buffer.from([recovery])]).toString('base64');
+
+  const signedTx = {
+    Hash: '0x' + hash,
+    Data: data,
+    Signature: { Sig: sigBase64 },
+  };
+
+  return await broadcastTx(signedTx, fromShard);
 }
 
-// Send ERC20 token (e.g. AUDt)
 export async function sendToken(privateKeyHex, fromAddress, toAddress, amountToken, contractAddress) {
-  const privKeyBytes = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
   const nonce = await getNonce(fromAddress);
-  const fromShard = getShardFromAddress(fromAddress);
-  const toShard = getShardFromAddress(toAddress);
-  const toBytes = Buffer.from(contractAddress.slice(2), 'hex'); // send to contract
+  const fromShard = parseInt(fromAddress[1]);
 
-  // ERC20 transfer(address to, uint256 amount)
-  const tokenAmount = Math.floor(parseFloat(amountToken) * 1e8);
-  const data = 'a9059cbb' +
-    toAddress.slice(2).padStart(64, '0') +
-    tokenAmount.toString(16).padStart(64, '0');
+  const amount = Math.floor(parseFloat(amountToken) * 1e8);
+  const payload = '0x' + 'a9059cbb' + toAddress.slice(3).padStart(64, '0') + amount.toString(16).padStart(64, '0');
 
-  const rawTx = buildRawTx(nonce, 1, 100000, toBytes, 0, fromShard, toShard, data);
-  const signed = await signAndSendTx(rawTx, privKeyBytes);
-  return await broadcast(signed, fromShard);
+  const data = {
+    Type: 0,
+    From: toHexAddr(fromAddress),
+    To: toHexAddr(contractAddress),
+    Amount: 0,
+    AccountNonce: nonce + 1,
+    GasPrice: 1,
+    GasLimit: 100000,
+    Timestamp: 0,
+    Payload: payload,
+  };
+
+  const infoList = [
+    data.Type, data.From, data.To, data.Amount, data.AccountNonce,
+    data.GasPrice, data.GasLimit, data.Timestamp, data.Payload,
+  ];
+  const hash = keccak_256(rlp.encode(infoList));
+
+  const priv = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
+  const hashBuf = Buffer.from(hash, 'hex');
+  const [sigBytes, recovery] = secp.signSync(hashBuf, priv, { der: false, recovered: true });
+  const sigBase64 = Buffer.concat([Buffer.from(sigBytes), Buffer.from([recovery])]).toString('base64');
+
+  const signedTx = {
+    Hash: '0x' + hash,
+    Data: data,
+    Signature: { Sig: sigBase64 },
+  };
+
+  return await broadcastTx(signedTx, fromShard);
 }
