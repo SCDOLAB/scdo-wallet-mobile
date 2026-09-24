@@ -97,7 +97,7 @@ function signData(data, privateKeyHex) {
 export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO) {
   const nonce = await getNonce(fromAddress);
   const value = Math.floor(parseFloat(amountSCDO) * 1e8);
-  const fromShard = parseInt(fromAddress[1]);
+  const fromShard = parseInt(fromAddress[0]);
 
   const data = {
     Type: 0,
@@ -124,7 +124,7 @@ export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO
 
 export async function sendToken(privateKeyHex, fromAddress, toAddress, amountToken, contractAddress) {
   const nonce = await getNonce(fromAddress);
-  const fromShard = parseInt(fromAddress[1]);
+  const fromShard = parseInt(fromAddress[0]);
 
   const amount = Math.floor(parseFloat(amountToken) * 1e8);
   const payload = '0x' + 'a9059cbb' + toAddress.slice(3).padStart(64, '0') + amount.toString(16).padStart(64, '0');
