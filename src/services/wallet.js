@@ -1,51 +1,45 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import 'react-native-get-random-values';
+import * as secp from '@noble/secp256k1';
+import { keccak_256 } from 'js-sha3';
 
-const STORAGE_KEY = '@scdo_wallet';
-
-// Generate a new wallet
 export async function createWallet() {
-  const Scdo = require('scdo.js');
-  const client = new Scdo();
-  const keypair = client.wallet.create();
-  return {
-    privateKey: keypair.privatekey,
-    address: keypair.publickey, // already in display format e.g. "1S01..."
-  };
+  const privKeyBytes = secp.utils.randomSecretKey();
+  const privateKey = '0x' + Buffer.from(privKeyBytes).toString('hex');
+
+  const pubKeyBytes = secp.getPublicKey(privKeyBytes, false);
+  const pubKeyHex = Buffer.from(pubKeyBytes).toString('hex').slice(2);
+
+  const hashHex = keccak_256(Buffer.from(pubKeyHex, 'hex'));
+  const addrHex = hashHex.slice(-40);
+  const addressBytes = Buffer.from(addrHex, 'hex');
+
+  addressBytes[0] = 1;
+  addressBytes[19] = addressBytes[19] & 0xF0 | 1;
+  const address = '1S' + addressBytes.toString('hex');
+
+  return { privateKey, address };
 }
 
-// Save wallet (private key + address) securely
 export async function saveWallet(privateKey, address) {
   await SecureStore.setItemAsync('scdo_privkey', privateKey);
   await SecureStore.setItemAsync('scdo_address', address);
 }
 
-// Load private key
 export async function loadPrivateKey() {
   return await SecureStore.getItemAsync('scdo_privkey');
 }
 
-// Load saved address
 export async function loadAddress() {
   return await SecureStore.getItemAsync('scdo_address');
 }
 
-// Delete wallet
 export async function deleteWallet() {
   await SecureStore.deleteItemAsync('scdo_privkey');
   await SecureStore.deleteItemAsync('scdo_address');
-  await AsyncStorage.removeItem(STORAGE_KEY);
 }
 
-// Check if wallet exists
 export async function hasWallet() {
   const key = await SecureStore.getItemAsync('scdo_privkey');
   return !!key;
-}
-
-// Sign and prepare transaction
-export async function signTransaction(privateKey, rawTx) {
-  const Scdo = require('scdo.js');
-  const client = new Scdo();
-  return client.generateTx(privateKey, rawTx);
 }

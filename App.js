@@ -1,3 +1,6 @@
+import { Buffer } from 'buffer';
+global.Buffer = global.Buffer || Buffer;
+import 'react-native-get-random-values';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -35,19 +38,12 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        {!walletReady ? (
-          <>
-            <Stack.Screen name="CreateWallet" component={CreateWalletScreen} options={{ title: 'Create Wallet' }} />
-            <Stack.Screen name="ImportWallet" component={ImportWalletScreen} options={{ title: 'Import Wallet' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'SCDO Wallet' }} />
-            <Stack.Screen name="Send" component={SendScreen} options={{ title: 'Send' }} />
-            <Stack.Screen name="Receive" component={ReceiveScreen} options={{ title: 'Receive' }} />
-          </>
-        )}
+      <Stack.Navigator initialRouteName={walletReady ? 'Home' : 'CreateWallet'}>
+        <Stack.Screen name="CreateWallet" component={CreateWalletScreen} options={{ title: 'Create Wallet' }} />
+        <Stack.Screen name="ImportWallet" component={ImportWalletScreen} options={{ title: 'Import Wallet' }} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'SCDO Wallet' }} />
+        <Stack.Screen name="Send" component={SendScreen} options={{ title: 'Send' }} />
+        <Stack.Screen name="Receive" component={ReceiveScreen} options={{ title: 'Receive' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

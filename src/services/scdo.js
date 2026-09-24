@@ -1,37 +1,21 @@
-// SCDO network configuration
-const NETWORKS = {
-  shard1: 'http://74.208.207.184:8037',
-  shard2: 'http://74.208.207.184:8038',
-  shard3: 'http://74.208.207.184:8039',
-  shard4: 'http://74.208.207.184:8036',
-};
+// SCDO RPC client - direct HTTP calls (no Node.js deps)
 
-const SHARD_RPC = {
-  1: NETWORKS.shard1,
-  2: NETWORKS.shard2,
-  3: NETWORKS.shard3,
-  4: NETWORKS.shard4,
-};
+const SHARDS = [
+  { id: 1, rpc: 'http://74.208.207.184:8037' },
+  { id: 2, rpc: 'http://74.208.207.184:8038' },
+  { id: 3, rpc: 'http://74.208.207.184:8039' },
+  { id: 4, rpc: 'http://74.208.207.184:8036' },
+];
 
-// Convert internal hex address to display format: "1S" + hex
-export function toDisplayAddress(hexAddress, shardNum) {
-  const clean = hexAddress.replace(/^0x/, '');
-  return `${shardNum}S${clean}`;
+// Get shard number from address like "1S0123..."
+export function getShardFromAddress(address) {
+  return parseInt(address.substring(0, 1));
 }
 
-// Convert display address to hex
-export function fromDisplayAddress(displayAddr) {
-  const match = displayAddr.match(/^([1-4])S([0-9a-fA-F]+)$/);
-  if (!match) throw new Error('Invalid SCDO address');
-  return {
-    shard: parseInt(match[1]),
-    hex: '0x' + match[2],
-  };
-}
-
-// RPC call to SCDO node
-async function rpcCall(host, method, params = []) {
-  const response = await fetch(host, {
+// JSON-RPC call to a specific shard
+async function rpc(shardId, method, params = []) {
+  const shard = SHARDS.find(s => s.id === shardId) || SHARDS[0];
+  const res = await fetch(shard.rpc, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -41,50 +25,28 @@ async function rpcCall(host, method, params = []) {
       id: 1,
     }),
   });
-  const data = await response.json();
+  const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   return data.result;
 }
 
-// Get balance for an address on its shard
-export async function getBalance(displayAddress) {
-  const { shard, hex } = fromDisplayAddress(displayAddress);
-  const rpc = SHARD_RPC[shard];
-  return await rpcCall(rpc, 'getBalance', [hex]);
+// Get balance in Wei
+export async function getBalance(address) {
+  const shard = getShardFromAddress(address);
+  const bal = await rpc(shard, 'scdo_getBalance', [address, 'latest']);
+  // Convert from Wei (1e18) to SCDO
+  const wei = BigInt(bal);
+  const scdo = Number(wei) / 1e18;
+  return scdo.toFixed(4);
 }
 
-// Get account info
-export async function getAccount(displayAddress) {
-  const { shard, hex } = fromDisplayAddress(displayAddress);
-  const rpc = SHARD_RPC[shard];
-  return await rpcCall(rpc, 'getAccount', [hex]);
+// Get nonce
+export async function getNonce(address) {
+  const shard = getShardFromAddress(address);
+  return await rpc(shard, 'scdo_getTransactionCount', [address, 'pending']);
 }
 
-// Get transactions for an address
-export async function getTransactions(displayAddress, flag = 2) {
-  const { shard, hex } = fromDisplayAddress(displayAddress);
-  const rpc = SHARD_RPC[shard];
-  // filterBlockTx: height=-1 means latest, flag=1=from, flag=2=to
-  return await rpcCall(rpc, 'filterBlockTx', [-1, hex, flag]);
+// Get chain ID
+export async function getChainId() {
+  return await rpc(1, 'scdo_chainId', []);
 }
-
-// Get node info
-export async function getNodeInfo() {
-  return await rpcCall(SHARD_RPC[1], 'getInfo', []);
-}
-
-// Estimate gas
-export async function estimateGas(rawTx) {
-  const rpc = SHARD_RPC[rawTx.ShardID || 1];
-  return await rpcCall(rpc, 'estimateGas', [rawTx]);
-}
-
-// Send raw signed transaction
-export async function sendRawTx(signedTx) {
-  // Determine which shard to send to (from address shard)
-  const fromShard = signedTx.From ? parseInt(signedTx.From[0]) : 1;
-  const rpc = SHARD_RPC[fromShard] || SHARD_RPC[1];
-  return await rpcCall(rpc, 'sendTransaction', [signedTx]);
-}
-
-export { NETWORKS, SHARD_RPC };
