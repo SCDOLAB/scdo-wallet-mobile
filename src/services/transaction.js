@@ -2,13 +2,41 @@ import { Buffer } from 'buffer';
 global.Buffer = global.Buffer || Buffer;
 import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
-import rlp from 'rlp';
 import { getNonce } from './scdo';
 
 const RPC_PORTS = { 1: 8037, 2: 8038, 3: 8039, 4: 8036 };
 
 function toHexAddr(addr) {
   return '0x0' + addr.slice(3);
+}
+
+// Minimal RLP encoder
+function encodeSingle(item) {
+  if (item === null || item === undefined) return Buffer.from([128]);
+  if (typeof item === 'number') {
+    if (item === 0) return Buffer.from([128]);
+    const hex = item.toString(16);
+    const buf = Buffer.from(hex.length % 2 ? '0' + hex : hex, 'hex');
+    if (buf.length === 1 && buf[0] < 128) return buf;
+    return Buffer.concat([Buffer.from([128 + buf.length]), buf]);
+  }
+  if (typeof item === 'string') {
+    const hex = item.startsWith('0x') ? item.slice(2) : item;
+    const buf = Buffer.from(hex, 'hex');
+    if (buf.length === 1 && buf[0] < 128) return buf;
+    return Buffer.concat([Buffer.from([128 + buf.length]), buf]);
+  }
+  return Buffer.from([128]);
+}
+
+function rlpEncode(items) {
+  const payload = Buffer.concat(items.map(encodeSingle));
+  if (payload.length < 56) {
+    return Buffer.concat([Buffer.from([192 + payload.length]), payload]);
+  }
+  const lenHex = payload.length.toString(16);
+  const lenBuf = Buffer.from(lenHex, 'hex');
+  return Buffer.concat([Buffer.from([247 + lenBuf.length]), lenBuf, payload]);
 }
 
 async function broadcastTx(signedTx, fromShard) {
@@ -27,7 +55,7 @@ function signData(data, privateKeyHex) {
     data.Type, data.From, data.To, data.Amount, data.AccountNonce,
     data.GasPrice, data.GasLimit, data.Timestamp, data.Payload,
   ];
-  const encoded = rlp.encode(infoList);
+  const encoded = rlpEncode(infoList);
   const hash = keccak_256(encoded);
 
   const priv = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
