@@ -99,7 +99,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.bottomNav}>
         <Text style={[styles.navItem, styles.navActive]}>资产</Text>
         <TouchableOpacity onPress={() => navigation.navigate('TxHistory')}>
-          <Text style={styles.navItem}>交易</Text>
+          <Text style={styles.navItem}>History</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Mine')}>
           <Text style={styles.navItem}>挖矿</Text>
