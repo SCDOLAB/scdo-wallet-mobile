@@ -17,7 +17,7 @@ export default function TxHistoryScreen() {
         from: '1S013549ef29...',
         to: addr,
         amount: '100.00000000 SCDO',
-        time: '2026-09-24 19:31',
+        time: '2026-09-24 19:31 AEST (UTC+10)',
       });
     }
     setTxs(known);
