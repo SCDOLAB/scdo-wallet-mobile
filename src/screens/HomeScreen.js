@@ -106,6 +106,9 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('TxHistory')}>
           <Text style={styles.navItem}>交易</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Mine')}>
+          <Text style={styles.navItem}>挖矿</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('KYC')}>
           <Text style={styles.navItem}>KYC</Text>
         </TouchableOpacity>

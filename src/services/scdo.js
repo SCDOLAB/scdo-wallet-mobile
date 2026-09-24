@@ -16,7 +16,7 @@ export function getShardFromAddress(address) {
   return parseInt(address.substring(0, 1));
 }
 
-async function rpc(shardId, method, params = []) {
+export async function rpc(shardId, method, params = []) {
   const shard = SHARDS.find(s => s.id === shardId) || SHARDS[0];
   const res = await fetch(shard.rpc, {
     method: 'POST',

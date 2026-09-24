@@ -13,6 +13,7 @@ import ReceiveScreen from './src/screens/ReceiveScreen';
 import KycScreen from './src/screens/KycScreen';
 import TxHistoryScreen from './src/screens/TxHistoryScreen';
 import BackupScreen from './src/screens/BackupScreen';
+import MineScreen from './src/screens/MineScreen';
 import { hasWallet } from './src/services/wallet';
 
 const Stack = createNativeStackNavigator();
@@ -57,6 +58,7 @@ export default function App() {
         <Stack.Screen name="KYC" component={KycScreen} options={{ title: 'KYC Verification' }} />
         <Stack.Screen name="TxHistory" component={TxHistoryScreen} options={{ title: 'History' }} />
         <Stack.Screen name="Backup" component={BackupScreen} options={{ title: 'Backup' }} />
+        <Stack.Screen name="Mine" component={MineScreen} options={{ title: 'Mining' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
