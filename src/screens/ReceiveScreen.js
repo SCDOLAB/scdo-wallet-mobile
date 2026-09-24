@@ -1,40 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Share } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { loadAddress } from '../services/wallet';
 
 export default function ReceiveScreen() {
   const [address, setAddress] = useState('');
-
-  useEffect(() => {
-    loadAddr();
-  }, []);
-
-  async function loadAddr() {
-    const addr = await loadAddress();
-    if (addr) setAddress(addr);
-  }
-
-  async function shareAddress() {
-    await Share.share({ message: `My SCDO address: ${address}` });
-  }
+  React.useEffect(() => { loadAddress().then(setAddress); }, []);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Receive SCDO</Text>
-      <Text style={styles.addressLabel}>Your Address</Text>
-      <Text style={styles.address} selectable>{address}</Text>
-      <TouchableOpacity style={styles.button} onPress={shareAddress}>
-        <Text style={styles.buttonText}>Share Address</Text>
-      </TouchableOpacity>
+      <Text style={styles.subtitle}>Share your address to receive funds</Text>
+      <View style={styles.card}>
+        <Text style={styles.label}>Your Address</Text>
+        <Text style={styles.address} selectable>{address}</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, alignItems: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginVertical: 20 },
-  addressLabel: { fontSize: 14, color: '#666', marginTop: 20 },
-  address: { fontSize: 16, fontWeight: '600', textAlign: 'center', marginVertical: 8, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 8 },
-  button: { backgroundColor: '#2196F3', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20, width: '100%' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  container: { flex: 1, backgroundColor: '#0F1115', padding: 24 },
+  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 60, marginBottom: 8 },
+  subtitle: { color: '#8B8D98', fontSize: 14, marginBottom: 32 },
+  card: { backgroundColor: '#1A1D24', borderRadius: 12, padding: 20 },
+  label: { color: '#8B8D98', fontSize: 12, marginBottom: 8 },
+  address: { color: '#4CAF50', fontSize: 14, fontFamily: 'monospace', lineHeight: 22 },
 });

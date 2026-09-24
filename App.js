@@ -10,6 +10,8 @@ import CreateWalletScreen from './src/screens/CreateWalletScreen';
 import ImportWalletScreen from './src/screens/ImportWalletScreen';
 import SendScreen from './src/screens/SendScreen';
 import ReceiveScreen from './src/screens/ReceiveScreen';
+import KycScreen from './src/screens/KycScreen';
+import TxHistoryScreen from './src/screens/TxHistoryScreen';
 import { hasWallet } from './src/services/wallet';
 
 const Stack = createNativeStackNavigator();
@@ -44,6 +46,8 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'SCDO Wallet' }} />
         <Stack.Screen name="Send" component={SendScreen} options={{ title: 'Send' }} />
         <Stack.Screen name="Receive" component={ReceiveScreen} options={{ title: 'Receive' }} />
+        <Stack.Screen name="KYC" component={KycScreen} options={{ title: 'KYC Verification' }} />
+        <Stack.Screen name="TxHistory" component={TxHistoryScreen} options={{ title: 'History' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

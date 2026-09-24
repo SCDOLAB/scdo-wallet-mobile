@@ -8,6 +8,7 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "@noble/hashes": "^2.4.0",
     "@noble/secp256k1": "^3.2.0",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -15,6 +16,7 @@
     "@react-navigation/native-stack": "^6.9.0",
     "buffer": "^6.0.3",
     "expo": "^57.0.0",
+    "expo-camera": "^57.0.5",
     "expo-secure-store": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "js-sha3": "^0.13.0",
