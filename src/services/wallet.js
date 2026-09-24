@@ -14,11 +14,19 @@ export async function createWallet() {
   const addrHex = hashHex.slice(-40);
   const addressBytes = Buffer.from(addrHex, 'hex');
 
-  addressBytes[0] = 1;
-  addressBytes[19] = addressBytes[19] & 0xF0 | 1;
-  const address = '1S' + addressBytes.toString('hex');
+  // Derive addresses for all 4 shards
+  const addresses = {};
+  for (let shard = 1; shard <= 4; shard++) {
+    const b = Buffer.from(addressBytes);
+    b[0] = shard;
+    b[19] = b[19] & 0xF0 | 1;
+    addresses[`shard${shard}`] = shard + 'S' + b.toString('hex');
+  }
 
-  return { privateKey, address };
+  // Default to shard 1
+  const address = addresses.shard1;
+
+  return { privateKey, address, addresses };
 }
 
 export async function saveWallet(privateKey, address) {
