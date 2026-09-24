@@ -29,7 +29,7 @@ export default function SendScreen() {
       }
       Alert.alert('Sent!', `Tx: ${txHash}`);
     } catch (e) {
-      Alert.alert('Error', e.message);
+      Alert.alert('Error', e.message + '\n' + (e.stack || '').slice(0, 300));
     }
     setSending(false);
   }
