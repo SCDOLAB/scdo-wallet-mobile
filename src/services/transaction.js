@@ -38,9 +38,11 @@ function buildRawTx(nonce, gasPrice, gasLimit, toBytes, value, fromShard, toShar
 async function signAndSendTx(rawTx, privKeyBytes) {
   const encoded = rlp.encode(rawTx);
   const hash = Buffer.from(keccak_256(encoded), 'hex');
-  const sig = secp.signSync(hash, privKeyBytes, { canonical: true });
-  const v = 27 + (sig[64] || 0);
-  return [...rawTx, Buffer.from([v]), sig.slice(0, 32), sig.slice(32, 64)];
+  const sig = await secp.signAsync(hash, privKeyBytes);
+  const r = Buffer.from(sig.r.toBytes('be', 32));
+  const s = Buffer.from(sig.s.toBytes('be', 32));
+  const v = sig.recovery || 0;
+  return [...rawTx, Buffer.from([27 + v]), r, s];
 }
 
 // Send native SCDO
