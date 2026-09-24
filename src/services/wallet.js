@@ -7,10 +7,14 @@ export async function createWallet() {
   const privKeyBytes = secp.utils.randomPrivateKey();
   const privateKey = '0x' + Buffer.from(privKeyBytes).toString('hex');
 
+  // Get uncompressed public key (65 bytes, starts with 0x04), strip prefix → 64 bytes
   const pubKeyBytes = secp.getPublicKey(privKeyBytes, false);
-  const pubKeyHex = Buffer.from(pubKeyBytes).toString('hex').slice(2);
+  const pubKeyRaw = Buffer.from(pubKeyBytes).slice(1); // 64 bytes
 
-  const hashHex = keccak_256(Buffer.from(pubKeyHex, 'hex'));
+  // SCDO address derivation: RLP-encode the 64-byte pubkey, then keccak256
+  // RLP encode a 64-byte string: 0xb8 0x40 + data
+  const rlpPubKey = Buffer.concat([Buffer.from([0xb8, 0x40]), pubKeyRaw]);
+  const hashHex = keccak_256(rlpPubKey);
   const addrHex = hashHex.slice(-40);
   const addressBytes = Buffer.from(addrHex, 'hex');
 
