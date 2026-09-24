@@ -102,6 +102,9 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('Backup')}>
           <Text style={styles.navItem}>备份</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('KYC')}>
+          <Text style={styles.navItem}>KYC</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
