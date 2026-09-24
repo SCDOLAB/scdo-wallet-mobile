@@ -79,24 +79,35 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.tokenIcon}><Text style={styles.tokenIconText}>S</Text></View>
           <View style={styles.tokenInfo}>
             <Text style={styles.tokenName}>SCDO</Text>
-            <Text style={styles.tokenUsd}>≈$0</Text>
+            <Text style={styles.tokenUsd}>0 USD ▲</Text>
           </View>
           <View style={styles.tokenRight}>
             <Text style={styles.tokenBalance}>{balance}</Text>
+            <Text style={styles.tokenUsd2}>≈$0</Text>
           </View>
         </View>
 
-        {/* Other tokens placeholder */}
-        {['USDO TEST', 'LSD', 'WIN'].map(t => (
-          <View style={styles.tokenRow} key={t}>
+        {/* Layer2 tokens */}
+        {[
+          { sym: 'U', name: 'USDO TEST', bal: '111.34567902' },
+          { sym: 'L', name: 'LSD', bal: '1.111111' },
+          { sym: 'W', name: 'WIN', bal: '0.00004512' },
+          { sym: 'K', name: 'KTK', bal: '0' },
+          { sym: 'L', name: 'LENAZHANG', bal: '0' },
+          { sym: 'R', name: 'RABBIT', bal: '0' },
+        ].map(t => (
+          <View style={styles.tokenRow} key={t.name}>
             <View style={[styles.tokenIcon, { backgroundColor: '#1a1d24' }]}>
-              <Text style={styles.tokenIconText}>{t[0]}</Text>
+              <Text style={[styles.tokenIconText, { color: '#8B8D98' }]}>{t.sym}</Text>
             </View>
             <View style={styles.tokenInfo}>
-              <Text style={styles.tokenName}>{t}</Text>
-              <Text style={styles.tokenUsd}>≈$0</Text>
+              <Text style={styles.tokenName}>{t.name}</Text>
+              <Text style={styles.tokenUsd}>0 USD ▲</Text>
             </View>
-            <Text style={styles.tokenBalance}>0.00</Text>
+            <View style={styles.tokenRight}>
+              <Text style={styles.tokenBalance}>{t.bal}</Text>
+              <Text style={styles.tokenUsd2}>≈$0</Text>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -140,6 +151,7 @@ const styles = StyleSheet.create({
   tokenInfo: { flex: 1, marginLeft: 12 },
   tokenName: { color: '#fff', fontSize: 16, fontWeight: '600' },
   tokenUsd: { color: '#666', fontSize: 12, marginTop: 2 },
+  tokenUsd2: { color: '#666', fontSize: 12, marginTop: 2 },
   tokenRight: { alignItems: 'flex-end' },
   tokenBalance: { color: '#fff', fontSize: 16, fontWeight: '500' },
   bottomNav: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#1a1d24' },
