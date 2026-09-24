@@ -58,6 +58,36 @@ export default function HomeScreen({ navigation }) {
       <ScrollView refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#666" />
       }>
+        {/* SCDO row */}
+        <View style={styles.assetRow}>
+          <View style={styles.coinIcon}><Text style={styles.coinIconText}>S</Text></View>
+          <View style={{flex:1}}>
+            <Text style={styles.coinName}>SCDO</Text>
+            <Text style={styles.coinSub}>Native Chain</Text>
+          </View>
+          <Text style={styles.coinBalance}>{balance}</Text>
+        </View>
+
+        {/* AUD Stablecoin row */}
+        <View style={styles.assetRow}>
+          <View style={[styles.coinIcon, { backgroundColor: '#1e6b3a' }]}><Text style={styles.coinIconText}>A</Text></View>
+          <View style={{flex:1}}>
+            <Text style={styles.coinName}>AUDt</Text>
+            <Text style={styles.coinSub}>AUD Stablecoin</Text>
+          </View>
+          <Text style={styles.coinBalance}>0.00</Text>
+        </View>
+
+        {/* Fiat on/off ramp buttons */}
+        <View style={styles.fiatRow}>
+          <TouchableOpacity style={styles.depositBtn}>
+            <Text style={styles.fiatBtnText}>+ Deposit AUD</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.withdrawBtn}>
+            <Text style={styles.fiatBtnText}>− Withdraw AUD</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Address */}
         <View style={styles.addrBox}>
           <Text style={styles.addrLabel}>My Address</Text>
@@ -94,6 +124,16 @@ const styles = StyleSheet.create({
   addrBox: { margin: 20, padding: 16, backgroundColor: '#1a1d24', borderRadius: 12 },
   addrLabel: { color: '#666', fontSize: 12, marginBottom: 8 },
   addrText: { color: '#4CAF50', fontSize: 13, fontFamily: 'monospace' },
+  assetRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a1d24' },
+  coinIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#4CAF50', alignItems: 'center', justifyContent: 'center' },
+  coinIconText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  coinName: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  coinSub: { color: '#666', fontSize: 11, marginTop: 2 },
+  coinBalance: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  fiatRow: { flexDirection: 'row', gap: 12, padding: 20 },
+  depositBtn: { flex: 1, backgroundColor: '#4CAF50', borderRadius: 10, padding: 14, alignItems: 'center' },
+  withdrawBtn: { flex: 1, backgroundColor: '#2a3142', borderRadius: 10, padding: 14, alignItems: 'center' },
+  fiatBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   bottomNav: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#1a1d24' },
   navItem: { color: '#666', fontSize: 14 },
   navActive: { color: '#4CAF50', fontSize: 14, fontWeight: '600' },
