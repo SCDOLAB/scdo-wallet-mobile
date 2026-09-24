@@ -27,6 +27,7 @@
     "react-native-qrcode-svg": "^6.3.26",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-svg": "^15.15.5",
     "rlp": "^3.0.0",
     "scdo.js": "file:../scdo.js-master"
   },
