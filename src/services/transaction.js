@@ -2,28 +2,38 @@ import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
 import { rpc, getNonce, getShardFromAddress, TOKENS } from './scdo';
 
-const nonceTracker = {};
-
-// RLP encoder
+// RLP encode a value
 function rlpEncode(input) {
-  if (typeof input === 'number' || typeof input === 'bigint') {
-    const buf = Buffer.from(input.toString(16).padStart(64, '0'), 'hex');
-    return rlpEncode(buf);
+  if (input === null || input === undefined) {
+    return Buffer.from([]);
   }
   if (Buffer.isBuffer(input)) {
     if (input.length === 1 && input[0] < 0x80) return input;
     return Buffer.concat([encodeLength(0x80, input.length), input]);
   }
+  if (typeof input === 'number') {
+    if (input === 0) return Buffer.from([]);
+    const hex = input.toString(16);
+    return rlpEncode(Buffer.from(hex.length % 2 ? '0' + hex : hex, 'hex'));
+  }
+  if (typeof input === 'string') {
+    // Hex string like "0x..."
+    if (input.startsWith('0x')) {
+      return rlpEncode(Buffer.from(input.slice(2), 'hex'));
+    }
+    return rlpEncode(Buffer.from(input, 'utf8'));
+  }
   if (Array.isArray(input)) {
     const payload = Buffer.concat(input.map(rlpEncode));
     return Buffer.concat([encodeLength(0xc0, payload.length), payload]);
   }
-  return rlpEncode(Buffer.from(String(input), 'utf8'));
+  return rlpEncode(Buffer.from([]));
 }
 
 function encodeLength(offset, len) {
   if (len < 56) return Buffer.from([offset + len]);
-  const lenBuf = Buffer.from(len.toString(16).padStart(2 * Math.ceil(len.toString(16).length / 2), '0'), 'hex');
+  const lenHex = len.toString(16);
+  const lenBuf = Buffer.from(lenHex.length % 2 ? '0' + lenHex : lenHex, 'hex');
   return Buffer.concat([Buffer.from([offset + 55 + lenBuf.length]), lenBuf]);
 }
 
@@ -44,21 +54,25 @@ function toHexAddr(addr) {
   return '0x' + addr.slice(2);
 }
 
-async function sendWithRetry(chainId, txData, privKeyBytes, maxRetries = 3) {
-  const from = txData.From;
+async function sendWithRetry(shardId, txData, privKeyBytes, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const encoded = rlpEncode([
+      // Hash: keccak256(RLP.encode([Type, From, To, Amount, AccountNonce, GasPrice, GasLimit, Timestamp, Payload]))
+      const list = [
         txData.Type, txData.From, txData.To, txData.Amount,
         txData.AccountNonce, txData.GasPrice, txData.GasLimit,
         txData.Timestamp, txData.Payload,
-      ]);
+      ];
+      const encoded = rlpEncode(list);
       const txHash = '0x' + keccak_256(encoded);
-      const [sigBytes, recovery] = secp.signSync(Buffer.from(keccak_256(encoded), 'hex'), privKeyBytes, { recovered: true });
+
+      // Sign the hash
+      const hashBytes = Buffer.from(keccak_256(encoded), 'hex');
+      const [sigBytes, recovery] = secp.signSync(hashBytes, privKeyBytes, { recovered: true });
       const sigBuf = Buffer.concat([Buffer.from(sigBytes), Buffer.from([recovery])]);
       const base64Sig = bytesToBase64(sigBuf);
 
-      const res = await rpc(chainId, 'scdo_addTx', [{
+      const res = await rpc(shardId, 'scdo_addTx', [{
         Data: txData,
         Hash: txHash,
         Signature: { Sig: base64Sig, Pubkey: '' },
