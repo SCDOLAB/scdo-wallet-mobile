@@ -12,93 +12,137 @@ export default function HomeScreen({ navigation }) {
 
   async function loadWallet() {
     const addr = await loadAddress();
-    if (addr) {
-      setAddress(addr);
-      refreshBalance(addr);
-    }
+    if (addr) { setAddress(addr); refreshBalance(addr); }
   }
 
   async function refreshBalance(addr) {
     const target = addr || address;
     if (!target) return;
-    try {
-      const bal = await getBalance(target);
-      setBalance(bal);
-    } catch (e) { console.log(e); }
+    try { setBalance(await getBalance(target)); } catch (e) {}
   }
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refreshBalance();
-    setRefreshing(false);
+    setRefreshing(true); await refreshBalance(); setRefreshing(false);
   }, [address]);
 
   return (
-    <ScrollView style={styles.container} refreshControl={
-      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#666" />
-    }>
-      <View style={styles.header}>
-        <Text style={styles.appName}>SCDO</Text>
+    <View style={styles.container}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <View style={styles.avatar}><Text style={styles.avatarText}>Y</Text></View>
+        <View style={styles.tabs}>
+          <Text style={styles.tab}>托管钱包</Text>
+          <View style={styles.tabActive}><Text style={styles.tabActiveText}>WEB3钱包</Text></View>
+        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Receive')}>
+          <Text style={styles.scan}>⊞</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Total Balance</Text>
-        <Text style={styles.balance}>
-          <Text style={styles.balanceSymbol}>$ </Text>{balance}
-        </Text>
-        <Text style={styles.balanceUnit}>SCDO</Text>
+      {/* Action row */}
+      <View style={styles.actionRow}>
+        <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('Send')}>
+          <Text style={styles.actionIcon}>↑</Text>
+          <Text style={styles.actionLabel}>发送</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('Receive')}>
+          <Text style={styles.actionIcon}>↓</Text>
+          <Text style={styles.actionLabel}>接收</Text>
+        </TouchableOpacity>
+        <View style={styles.actionItem}>
+          <Text style={styles.actionIcon}>⇄</Text>
+          <Text style={styles.actionLabel}>闪兑</Text>
+        </View>
+        <View style={styles.actionItem}>
+          <Text style={styles.actionIcon}>💳</Text>
+          <Text style={styles.actionLabel}>信用卡</Text>
+        </View>
       </View>
 
-      <View style={styles.addressCard}>
-        <Text style={styles.addressLabel}>My Address</Text>
-        <Text style={styles.address} selectable>{address}</Text>
-      </View>
+      <ScrollView refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#666" />
+      }>
+        {/* Asset tabs */}
+        <View style={styles.assetHeader}>
+          <Text style={styles.assetTitle}>资产</Text>
+          <Text style={styles.toolTag}>工具 NEW</Text>
+        </View>
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Receive')}>
-          <View style={[styles.actionIcon, { backgroundColor: '#1B5E20' }]}>
-            <Text style={styles.actionIconText}>↓</Text>
+        {/* Search */}
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchText}>搜索币种</Text>
+        </View>
+
+        {/* SCDO token row */}
+        <View style={styles.tokenRow}>
+          <View style={styles.tokenIcon}><Text style={styles.tokenIconText}>S</Text></View>
+          <View style={styles.tokenInfo}>
+            <Text style={styles.tokenName}>SCDO</Text>
+            <Text style={styles.tokenUsd}>≈$0</Text>
           </View>
-          <Text style={styles.actionText}>Receive</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Send')}>
-          <View style={[styles.actionIcon, { backgroundColor: '#B71C1C' }]}>
-            <Text style={styles.actionIconText}>↑</Text>
+          <View style={styles.tokenRight}>
+            <Text style={styles.tokenBalance}>{balance}</Text>
           </View>
-          <Text style={styles.actionText}>Send</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('KYC')}>
-          <View style={[styles.actionIcon, { backgroundColor: '#0D47A1' }]}>
-            <Text style={styles.actionIconText}>✓</Text>
+        </View>
+
+        {/* Other tokens placeholder */}
+        {['USDO TEST', 'LSD', 'WIN'].map(t => (
+          <View style={styles.tokenRow} key={t}>
+            <View style={[styles.tokenIcon, { backgroundColor: '#1a1d24' }]}>
+              <Text style={styles.tokenIconText}>{t[0]}</Text>
+            </View>
+            <View style={styles.tokenInfo}>
+              <Text style={styles.tokenName}>{t}</Text>
+              <Text style={styles.tokenUsd}>≈$0</Text>
+            </View>
+            <Text style={styles.tokenBalance}>0.00</Text>
           </View>
-          <Text style={styles.actionText}>KYC</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('TxHistory')}>
-          <View style={[styles.actionIcon, { backgroundColor: '#4A148C' }]}>
-            <Text style={styles.actionIconText}>≡</Text>
-          </View>
-          <Text style={styles.actionText}>History</Text>
+        ))}
+      </ScrollView>
+
+      {/* Bottom nav */}
+      <View style={styles.bottomNav}>
+        <Text style={[styles.navItem, styles.navActive]}>◈ 资产</Text>
+        <Text style={styles.navItem}>⇄ 交易</Text>
+        <Text style={styles.navItem}>◉ 赚币</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('KYC')}>
+          <Text style={styles.navItem}>◇ KYC</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F1115' },
-  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16 },
-  appName: { color: '#fff', fontSize: 20, fontWeight: '700', letterSpacing: 1 },
-  balanceCard: { paddingHorizontal: 24, paddingVertical: 32, alignItems: 'center' },
-  balanceLabel: { color: '#8B8D98', fontSize: 13, marginBottom: 8 },
-  balance: { color: '#fff', fontSize: 48, fontWeight: '300' },
-  balanceSymbol: { color: '#8B8D98', fontSize: 24 },
-  balanceUnit: { color: '#4CAF50', fontSize: 14, marginTop: 4, fontWeight: '600' },
-  addressCard: { marginHorizontal: 16, backgroundColor: '#1A1D24', borderRadius: 12, padding: 16, marginBottom: 24 },
-  addressLabel: { color: '#8B8D98', fontSize: 11, marginBottom: 6 },
-  address: { color: '#E8EAF0', fontSize: 12, fontFamily: 'monospace' },
-  actions: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 16, paddingVertical: 16 },
-  actionBtn: { alignItems: 'center', flex: 1 },
-  actionIcon: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  actionIconText: { color: '#fff', fontSize: 24, fontWeight: '600' },
-  actionText: { color: '#E8EAF0', fontSize: 13 },
+  container: { flex: 1, backgroundColor: '#0B0E11' },
+  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 12 },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1a1d24', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#fff', fontSize: 16 },
+  tabs: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 20 },
+  tab: { color: '#666', fontSize: 14 },
+  tabActive: { backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 4 },
+  tabActiveText: { color: '#000', fontSize: 14, fontWeight: '600' },
+  scan: { color: '#fff', fontSize: 22 },
+  actionRow: { flexDirection: 'row', paddingVertical: 20, paddingHorizontal: 8 },
+  actionItem: { flex: 1, alignItems: 'center' },
+  actionIcon: { color: '#fff', fontSize: 22, marginBottom: 6 },
+  actionLabel: { color: '#aaa', fontSize: 12 },
+  assetHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
+  assetTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  toolTag: { color: '#4CAF50', fontSize: 11, backgroundColor: '#1a3a1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a1d24', margin: 16, borderRadius: 12, padding: 12 },
+  searchIcon: { fontSize: 14, marginRight: 8 },
+  searchText: { color: '#555', fontSize: 14 },
+  tokenRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a1d24' },
+  tokenIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#4CAF50', alignItems: 'center', justifyContent: 'center' },
+  tokenIconText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  tokenInfo: { flex: 1, marginLeft: 12 },
+  tokenName: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  tokenUsd: { color: '#666', fontSize: 12, marginTop: 2 },
+  tokenRight: { alignItems: 'flex-end' },
+  tokenBalance: { color: '#fff', fontSize: 16, fontWeight: '500' },
+  bottomNav: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#1a1d24' },
+  navItem: { color: '#666', fontSize: 13 },
+  navActive: { color: '#4CAF50', fontSize: 13, fontWeight: '600' },
 });
