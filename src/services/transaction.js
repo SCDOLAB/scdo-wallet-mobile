@@ -1,28 +1,14 @@
+import { Buffer } from 'buffer';
+global.Buffer = global.Buffer || Buffer;
 import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
-import RLP from 'rlp';
-import { Buffer } from 'buffer';
+import rlp from 'rlp';
 import { getNonce } from './scdo';
 
 const RPC_PORTS = { 1: 8037, 2: 8038, 3: 8039, 4: 8036 };
 
 function toHexAddr(addr) {
   return '0x0' + addr.slice(3);
-}
-
-// Convert a value to Buffer for RLP encoding
-function toRlpItem(v) {
-  if (v === null || v === undefined) return Buffer.alloc(0);
-  if (typeof v === 'number') {
-    if (v === 0) return Buffer.alloc(0);
-    const hex = v.toString(16);
-    return Buffer.from(hex.length % 2 ? '0' + hex : hex, 'hex');
-  }
-  if (typeof v === 'string') {
-    if (v.startsWith('0x')) return Buffer.from(v.slice(2), 'hex');
-    return Buffer.from(v);
-  }
-  return Buffer.from(v);
 }
 
 async function broadcastTx(signedTx, fromShard) {
@@ -38,11 +24,10 @@ async function broadcastTx(signedTx, fromShard) {
 
 function signData(data, privateKeyHex) {
   const infoList = [
-    toRlpItem(data.Type), toRlpItem(data.From), toRlpItem(data.To),
-    toRlpItem(data.Amount), toRlpItem(data.AccountNonce), toRlpItem(data.GasPrice),
-    toRlpItem(data.GasLimit), toRlpItem(data.Timestamp), toRlpItem(data.Payload),
+    data.Type, data.From, data.To, data.Amount, data.AccountNonce,
+    data.GasPrice, data.GasLimit, data.Timestamp, data.Payload,
   ];
-  const encoded = RLP.encode(infoList);
+  const encoded = rlp.encode(infoList);
   const hash = keccak_256(encoded);
 
   const priv = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
