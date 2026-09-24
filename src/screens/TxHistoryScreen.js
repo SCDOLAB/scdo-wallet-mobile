@@ -1,31 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { loadTxHistory } from '../services/kyc';
+import { loadAddress } from '../services/wallet';
+import { getTransactions } from '../services/scdo';
 
 export default function TxHistoryScreen() {
   const [txs, setTxs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadTxs(); }, []);
 
   async function loadTxs() {
-    const history = await loadTxHistory();
-    setTxs(history);
+    const addr = await loadAddress();
+    if (!addr) { setLoading(false); return; }
+    try {
+      const list = await getTransactions(addr);
+      setTxs(list || []);
+    } catch (e) {
+      console.log('Tx history error:', e.message);
+    }
+    setLoading(false);
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Transactions</Text>
-      {txs.length === 0 ? (
+      {loading ? (
+        <Text style={styles.empty}>Loading...</Text>
+      ) : txs.length === 0 ? (
         <Text style={styles.empty}>No transactions yet</Text>
       ) : (
         <FlatList
           data={txs}
-          keyExtractor={(item, i) => i.toString()}
+          keyExtractor={(item, i) => (item.hash || i).toString()}
           renderItem={({ item }) => (
             <View style={styles.txItem}>
-              <Text style={styles.txTo} numberOfLines={1}>To: {item.to}</Text>
-              <Text style={styles.txAmount}>{item.amount} SCDO</Text>
-              <Text style={styles.txTime}>{item.time}</Text>
+              <Text style={styles.txHash} numberOfLines={1}>{item.hash || 'tx'}</Text>
+              <Text style={styles.txFrom} numberOfLines={1}>From: {item.from || '—'}</Text>
+              <Text style={styles.txTo} numberOfLines={1}>To: {item.to || '—'}</Text>
             </View>
           )}
         />
@@ -39,7 +50,7 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 60, marginBottom: 20 },
   empty: { color: '#8B8D98', fontSize: 15, textAlign: 'center', marginTop: 60 },
   txItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#1A1D24' },
-  txTo: { color: '#8B8D98', fontSize: 13 },
-  txAmount: { color: '#fff', fontSize: 16, fontWeight: '600', marginTop: 4 },
-  txTime: { color: '#555', fontSize: 11, marginTop: 4 },
+  txHash: { color: '#4CAF50', fontSize: 12, fontFamily: 'monospace' },
+  txFrom: { color: '#8B8D98', fontSize: 12, marginTop: 6 },
+  txTo: { color: '#E8EAF0', fontSize: 12, marginTop: 2 },
 });

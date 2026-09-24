@@ -34,3 +34,10 @@ export async function getNonce(address) {
   const shard = getShardFromAddress(address);
   return await rpc(shard, 'scdo_getAccountNonce', [address, '', -1]);
 }
+
+export async function getTransactions(address) {
+  const shard = getShardFromAddress(address);
+  const sent = await rpc(shard, 'scdo_getTransactionsFrom', [address, '', -1]);
+  const received = await rpc(shard, 'scdo_getTransactionsTo', [address, '', -1]);
+  return [...(sent || []), ...(received || [])];
+}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Switch } from 'react-native';
 import { saveKyc, loadKyc, loadKycContract } from '../services/kyc';
 
-const CUSTOMER_TYPES = ['Individual', 'Sole Trader', 'Body Corporate', 'Partnership', 'Trust'];
+const CUSTOMER_TYPES = ['Individual', 'Sole Trader', 'Body Corporate', 'Partnership', 'Trust', 'Other'];
 
 export default function KycScreen() {
   const [customerType, setCustomerType] = useState('Individual');
@@ -102,6 +102,23 @@ export default function KycScreen() {
       <Text style={styles.label}>ID Number</Text>
       <TextInput style={styles.input} value={idNumber} onChangeText={setIdNumber} placeholderTextColor="#555" />
 
+      <Text style={styles.section}>Enhanced Due Diligence</Text>
+      <Text style={styles.label}>Source of Funds</Text>
+      <TextInput style={styles.input} value={sourceOfFunds} onChangeText={setSourceOfFunds} placeholderTextColor="#555" />
+      <Text style={styles.label}>Source of Wealth</Text>
+      <TextInput style={styles.input} value={sourceOfWealth} onChangeText={setSourceOfWealth} placeholderTextColor="#555" />
+      <Text style={styles.label}>Expected Monthly Turnover (AUD)</Text>
+      <TextInput style={styles.input} value={expectedMonthlyAUD} onChangeText={setExpectedMonthlyAUD} placeholderTextColor="#555" />
+
+      <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>PEP?</Text>
+        <Switch value={pep} onValueChange={setPep} />
+      </View>
+      <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>Sanctions hit?</Text>
+        <Switch value={sanctions} onValueChange={setSanctions} />
+      </View>
+
       <Text style={styles.section}>Risk Rating</Text>
       <View style={styles.riskRow}>
         {['low', 'medium', 'high'].map(r => (
@@ -140,6 +157,8 @@ const styles = StyleSheet.create({
   typeText: { color: '#8B8D98', fontSize: 12 },
   label: { color: '#8B8D98', fontSize: 12, marginBottom: 6, marginTop: 12 },
   input: { backgroundColor: '#1A1D24', borderRadius: 8, padding: 14, color: '#fff', fontSize: 15 },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
+  switchLabel: { color: '#8B8D98', fontSize: 14, flex: 1 },
   riskRow: { flexDirection: 'row', gap: 10 },
   riskBtn: { flex: 1, padding: 12, borderWidth: 1, borderColor: '#333', borderRadius: 8, alignItems: 'center' },
   riskActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
