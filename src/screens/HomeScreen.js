@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { loadAddress } from '../services/wallet';
 import { getBalance, getTokenBalance, TOKENS } from '../services/scdo';
 
@@ -9,7 +10,11 @@ export default function HomeScreen({ navigation }) {
   const [audtBalance, setAudtBalance] = useState('0.00');
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => { loadWallet(); }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadWallet();
+    }, [])
+  );
 
   async function loadWallet() {
     const addr = await loadAddress();
