@@ -115,10 +115,15 @@ export default function HomeScreen({ navigation }) {
       {/* Bottom nav */}
       <View style={styles.bottomNav}>
         <Text style={[styles.navItem, styles.navActive]}>◈ 资产</Text>
-        <Text style={styles.navItem}>⇄ 交易</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('TxHistory')}>
+          <Text style={styles.navItem}>⇄ 交易</Text>
+        </TouchableOpacity>
         <Text style={styles.navItem}>◉ 赚币</Text>
         <TouchableOpacity onPress={() => navigation.navigate('KYC')}>
           <Text style={styles.navItem}>◇ KYC</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Backup')}>
+          <Text style={styles.navItem}>⬇ 备份</Text>
         </TouchableOpacity>
       </View>
     </View>

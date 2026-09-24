@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Camera } from 'expo-camera';
+import { loadPrivateKey, loadAddress } from '../services/wallet';
+import { signAndSend } from '../services/transaction';
 
 export default function SendScreen() {
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [scanning, setScanning] = useState(false);
-  const [hasPermission, setHasPermission] = useState(null);
+  const [sending, setSending] = useState(false);
 
   async function startScan() {
     const { status } = await Camera.requestCameraPermissionsAsync();
-    setHasPermission(status === 'granted');
     if (status === 'granted') setScanning(true);
   }
 
@@ -19,14 +20,24 @@ export default function SendScreen() {
     setScanning(false);
   }
 
-  if (scanning && hasPermission) {
+  async function handleSend() {
+    if (!to || !amount) { Alert.alert('Error', 'Enter address and amount'); return; }
+    setSending(true);
+    try {
+      const privKey = await loadPrivateKey();
+      const from = await loadAddress();
+      const txHash = await signAndSend(privKey, from, to, amount);
+      Alert.alert('Sent!', `Tx: ${txHash}`);
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+    setSending(false);
+  }
+
+  if (scanning) {
     return (
       <View style={{ flex: 1 }}>
-        <Camera
-          style={{ flex: 1 }}
-          onBarCodeScanned={onBarCodeRead}
-          barCodeScannerSettings={{ barCodeTypes: ['qr'] }}
-        />
+        <Camera style={{ flex: 1 }} onBarCodeScanned={onBarCodeRead} barCodeScannerSettings={{ barCodeTypes: ['qr'] }} />
         <TouchableOpacity style={styles.closeScan} onPress={() => setScanning(false)}>
           <Text style={styles.closeText}>Cancel</Text>
         </TouchableOpacity>
@@ -37,7 +48,6 @@ export default function SendScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Send SCDO</Text>
-      <Text style={styles.subtitle}>Enter recipient address and amount</Text>
 
       <Text style={styles.label}>Recipient Address</Text>
       <View style={styles.inputRow}>
@@ -50,8 +60,8 @@ export default function SendScreen() {
       <Text style={styles.label}>Amount (SCDO)</Text>
       <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" placeholderTextColor="#555" />
 
-      <TouchableOpacity style={styles.sendBtn} onPress={() => Alert.alert('Coming Soon', 'Transaction signing in progress')}>
-        <Text style={styles.sendText}>Send</Text>
+      <TouchableOpacity style={styles.sendBtn} onPress={handleSend} disabled={sending}>
+        {sending ? <ActivityIndicator color="#fff" /> : <Text style={styles.sendText}>Send</Text>}
       </TouchableOpacity>
     </View>
   );
@@ -59,8 +69,7 @@ export default function SendScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F1115', padding: 24 },
-  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 60, marginBottom: 8 },
-  subtitle: { color: '#8B8D98', fontSize: 14, marginBottom: 32 },
+  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 60, marginBottom: 32 },
   label: { color: '#8B8D98', fontSize: 12, marginBottom: 8, marginTop: 16 },
   inputRow: { flexDirection: 'row', gap: 10 },
   input: { backgroundColor: '#1A1D24', borderRadius: 10, padding: 16, color: '#fff', fontSize: 16 },
