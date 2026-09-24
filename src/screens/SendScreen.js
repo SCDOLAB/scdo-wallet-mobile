@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadPrivateKey, loadAddress } from '../services/wallet';
 import { sendSCDO, sendToken } from '../services/transaction';
 import { TOKENS } from '../services/scdo';
@@ -17,6 +18,19 @@ export default function SendScreen() {
 
   async function handleSend() {
     if (!to || !amount) { Alert.alert('Error', 'Enter address and amount'); return; }
+
+    // Confirmation dialog
+    Alert.alert(
+      'Confirm Transaction',
+      `Send ${amount} ${token}\nto ${to.slice(0, 12)}...?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Confirm Send', onPress: doSend },
+      ]
+    );
+  }
+
+  async function doSend() {
     setSending(true);
     try {
       const privKey = await loadPrivateKey();
@@ -27,9 +41,25 @@ export default function SendScreen() {
       } else {
         txHash = await sendToken(privKey, from, to, amount, TOKENS.AUDT);
       }
-      Alert.alert('Sent!', `Tx: ${txHash}`);
+
+      // Save to local history
+      const txRecord = {
+        hash: txHash || 'pending',
+        from: from,
+        to: to,
+        amount: amount + ' ' + token,
+        time: new Date().toLocaleString(),
+      };
+      const existing = await AsyncStorage.getItem('scdo_txs');
+      const txs = existing ? JSON.parse(existing) : [];
+      txs.unshift(txRecord);
+      await AsyncStorage.setItem('scdo_txs', JSON.stringify(txs.slice(0, 50)));
+
+      Alert.alert('Sent!', `Tx: ${txHash}\n\nTransaction saved to history.`);
+      setTo('');
+      setAmount('');
     } catch (e) {
-      Alert.alert('Error', e.message + '\n' + (e.stack || '').slice(0, 300));
+      Alert.alert('Error', e.message);
     }
     setSending(false);
   }
