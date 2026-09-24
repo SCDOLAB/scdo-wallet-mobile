@@ -1,41 +1,7 @@
 import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
+import RLP from 'rlp';
 import { rpc, getNonce, getShardFromAddress, TOKENS } from './scdo';
-
-// RLP encode a value
-function rlpEncode(input) {
-  if (input === null || input === undefined) {
-    return Buffer.from([]);
-  }
-  if (Buffer.isBuffer(input)) {
-    if (input.length === 1 && input[0] < 0x80) return input;
-    return Buffer.concat([encodeLength(0x80, input.length), input]);
-  }
-  if (typeof input === 'number') {
-    if (input === 0) return Buffer.from([]);
-    const hex = input.toString(16);
-    return rlpEncode(Buffer.from(hex.length % 2 ? '0' + hex : hex, 'hex'));
-  }
-  if (typeof input === 'string') {
-    // Hex string like "0x..."
-    if (input.startsWith('0x')) {
-      return rlpEncode(Buffer.from(input.slice(2), 'hex'));
-    }
-    return rlpEncode(Buffer.from(input, 'utf8'));
-  }
-  if (Array.isArray(input)) {
-    const payload = Buffer.concat(input.map(rlpEncode));
-    return Buffer.concat([encodeLength(0xc0, payload.length), payload]);
-  }
-  return rlpEncode(Buffer.from([]));
-}
-
-function encodeLength(offset, len) {
-  if (len < 56) return Buffer.from([offset + len]);
-  const lenHex = len.toString(16);
-  const lenBuf = Buffer.from(lenHex.length % 2 ? '0' + lenHex : lenHex, 'hex');
-  return Buffer.concat([Buffer.from([offset + 55 + lenBuf.length]), lenBuf]);
-}
 
 function bytesToBase64(bytes) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -57,16 +23,20 @@ function toHexAddr(addr) {
 async function sendWithRetry(shardId, txData, privKeyBytes, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Hash: keccak256(RLP.encode([Type, From, To, Amount, AccountNonce, GasPrice, GasLimit, Timestamp, Payload]))
       const list = [
-        txData.Type, txData.From, txData.To, txData.Amount,
-        txData.AccountNonce, txData.GasPrice, txData.GasLimit,
-        txData.Timestamp, txData.Payload,
+        txData.Type,
+        Buffer.from(txData.From.slice(2), 'hex'),
+        Buffer.from(txData.To.slice(2), 'hex'),
+        txData.Amount,
+        txData.AccountNonce,
+        txData.GasPrice,
+        txData.GasLimit,
+        txData.Timestamp,
+        txData.Payload ? Buffer.from(txData.Payload.slice(2), 'hex') : Buffer.from([]),
       ];
-      const encoded = rlpEncode(list);
+      const encoded = RLP.encode(list);
       const txHash = '0x' + keccak_256(encoded);
 
-      // Sign the hash
       const hashBytes = Buffer.from(keccak_256(encoded), 'hex');
       const [sigBytes, recovery] = secp.signSync(hashBytes, privKeyBytes, { recovered: true });
       const sigBuf = Buffer.concat([Buffer.from(sigBytes), Buffer.from([recovery])]);
