@@ -55,3 +55,20 @@ export async function hasWallet() {
   const key = await SecureStore.getItemAsync('scdo_privkey');
   return !!key;
 }
+
+export async function importWallet(privateKeyHex) {
+  const normalized = privateKeyHex.startsWith('0x') ? privateKeyHex : '0x' + privateKeyHex;
+  const privKeyBytes = Buffer.from(normalized.replace('0x', ''), 'hex');
+  const pubKeyBytes = secp.getPublicKey(privKeyBytes, false);
+  const pubKeyRaw = Buffer.from(pubKeyBytes).slice(1);
+  const rlpPubKey = Buffer.concat([Buffer.from([0xb8, 0x40]), pubKeyRaw]);
+  const hashHex = keccak_256(rlpPubKey);
+  const addrHex = hashHex.slice(-40);
+  const addressBytes = Buffer.from(addrHex, 'hex');
+  const b = Buffer.from(addressBytes);
+  b[0] = 1;
+  b[19] = b[19] & 0xF0 | 1;
+  const address = '1S' + b.toString('hex');
+  await saveWallet(normalized, address);
+  return address;
+}

@@ -20,8 +20,8 @@ export default function CreateWalletScreen({ navigation }) {
     try {
       const wallet = await createWallet();
       await saveWallet(wallet.privateKey, wallet.address);
-      Alert.alert('Success', `Wallet created!\nAddress: ${wallet.address}\n\nIMPORTANT: Back up your private key!`, [
-        { text: 'OK', onPress: () => navigation.replace('Home') },
+      Alert.alert('Wallet Created!', `Your new address:\n${wallet.address}\n\n⚠️ Back up your private key now!`, [
+        { text: 'I Have Backed Up', onPress: () => navigation.replace('Home') },
       ]);
     } catch (e) {
       Alert.alert('Error', e.message);
@@ -31,8 +31,11 @@ export default function CreateWalletScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.logoCircle}>
+        <Text style={styles.logoText}>S</Text>
+      </View>
       <Text style={styles.title}>Create New Wallet</Text>
-      <Text style={styles.subtitle}>Set a 6-digit PIN to secure your wallet</Text>
+      <Text style={styles.subtitle}>Secure your wallet with a PIN</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter PIN"
@@ -40,6 +43,7 @@ export default function CreateWalletScreen({ navigation }) {
         keyboardType="numeric"
         value={pin}
         onChangeText={setPin}
+        placeholderTextColor="#555"
       />
       <TextInput
         style={styles.input}
@@ -48,23 +52,26 @@ export default function CreateWalletScreen({ navigation }) {
         keyboardType="numeric"
         value={confirmPin}
         onChangeText={setConfirmPin}
+        placeholderTextColor="#555"
       />
-      <TouchableOpacity style={styles.button} onPress={handleCreate}>
+      <TouchableOpacity style={styles.button} onPress={handleCreate} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create Wallet'}</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('ImportWallet')}>
-        <Text style={styles.link}>Already have a wallet? Import</Text>
+        <Text style={styles.link}>I already have a wallet</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 24 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 12, fontSize: 16 },
-  button: { backgroundColor: '#E94D5F', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 12 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { color: '#E94D5F', textAlign: 'center', marginTop: 16 },
+  container: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: '#0B0E11' },
+  logoCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#4CAF50', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 24 },
+  logoText: { color: '#fff', fontSize: 36, fontWeight: '700' },
+  title: { fontSize: 26, fontWeight: '700', color: '#fff', marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: '#8B8D98', marginBottom: 32, textAlign: 'center' },
+  input: { backgroundColor: '#1A1D24', borderRadius: 12, padding: 16, marginBottom: 12, fontSize: 16, color: '#fff' },
+  button: { backgroundColor: '#4CAF50', padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 12 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  link: { color: '#4CAF50', textAlign: 'center', marginTop: 20, fontSize: 14 },
 });
