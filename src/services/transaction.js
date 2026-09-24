@@ -54,9 +54,9 @@ async function sendWithRetry(chainId, txData, privKeyBytes, maxRetries = 3) {
         txData.Timestamp, txData.Payload,
       ]);
       const txHash = '0x' + keccak_256(encoded);
-      const sig = secp.signSync(Buffer.from(keccak_256(encoded), 'hex'), privKeyBytes);
-      const sigBytes = Buffer.concat([sig.toCompactRawBytes(), Buffer.from([sig.recovery])]);
-      const base64Sig = bytesToBase64(sigBytes);
+      const [sigBytes, recovery] = secp.signSync(Buffer.from(keccak_256(encoded), 'hex'), privKeyBytes, { recovered: true });
+      const sigBuf = Buffer.concat([Buffer.from(sigBytes), Buffer.from([recovery])]);
+      const base64Sig = bytesToBase64(sigBuf);
 
       const res = await rpc(chainId, 'scdo_addTx', [{
         Data: txData,
