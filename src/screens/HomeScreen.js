@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { loadAddress } from '../services/wallet';
 import { getBalance, getTokenBalance, TOKENS } from '../services/scdo';
 
@@ -85,10 +85,10 @@ export default function HomeScreen({ navigation }) {
 
         {/* Fiat on/off ramp buttons */}
         <View style={styles.fiatRow}>
-          <TouchableOpacity style={styles.depositBtn}>
+          <TouchableOpacity style={styles.depositBtn} onPress={() => Alert.alert('Deposit AUD', 'Bank transfer details will be provided after KYC verification.')}>
             <Text style={styles.fiatBtnText}>+ Deposit AUD</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.withdrawBtn}>
+          <TouchableOpacity style={styles.withdrawBtn} onPress={() => Alert.alert('Withdraw AUD', 'Bank transfer to your account. Coming soon.')}>
             <Text style={styles.fiatBtnText}>− Withdraw AUD</Text>
           </TouchableOpacity>
         </View>
