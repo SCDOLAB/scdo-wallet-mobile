@@ -334,21 +334,26 @@ async function loadHistory(){
     try{
       const hRes=await fetch(RPC[1],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlockHeight',params:[]})}).then(r=>r.json());
       const curHeight=hRes.result||9237739;
-      for(let h=curHeight;h>curHeight-15;h--){
+      const heights=[];for(let h=curHeight;h>curHeight-100;h--)heights.push(h);
+      const blocks=await Promise.all(heights.map(async h=>{
         try{
-          const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),3000);const bRes=await fetch(RPC[1],{signal:ctrl.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlock',params:["",h,true]})}).then(r=>r.json());
-          if(!bRes.result||!bRes.result.transactions)continue;
-          const ts=bRes.result.header.CreateTimestamp*1000;
-          for(const tx of bRes.result.transactions){
-            const fromH=toHuman(tx.from),toH=toHuman(tx.to);
-            if(fromH===myAddr||toH===myAddr){
-              const hash=tx.hash||('b'+h+':'+tx.from+tx.to+tx.amount);
-              if(seen[hash])continue;seen[hash]=1;
-              const dir=toH===myAddr?'IN':'OUT';
-              found.push({dir,other:dir==='IN'?fromH:toH,amount:(tx.amount/1e8).toFixed(8),time:ts,hash:hash});
-            }
+          const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),4000);
+          const bRes=await fetch(RPC[1],{signal:ctrl.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlock',params:["",h,true]})}).then(r=>r.json());
+          return bRes.result;
+        }catch(e){return null;}
+      }));
+      for(const b of blocks){
+        if(!b||!b.transactions)continue;
+        const ts=b.header.CreateTimestamp*1000;
+        for(const tx of b.transactions){
+          const fromH=toHuman(tx.from),toH=toHuman(tx.to);
+          if(fromH===myAddr||toH===myAddr){
+            const hash=tx.hash||('b'+b.header.Height+':'+tx.from+tx.to+tx.amount);
+            if(seen[hash])continue;seen[hash]=1;
+            const dir=toH===myAddr?'IN':'OUT';
+            found.push({dir,other:dir==='IN'?fromH:toH,amount:(tx.amount/1e8).toFixed(8),time:ts,hash:hash});
           }
-        }catch(e){}
+        }
       }
     }catch(e){}
     const localHist=JSON.parse(localStorage.getItem('scdo_tx_hist')||'[]');
