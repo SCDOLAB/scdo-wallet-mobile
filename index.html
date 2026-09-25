@@ -385,7 +385,7 @@ async function loadHistory(){
   };
   window.stopScan=function(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}document.getElementById('cam-overlay').classList.add('hidden');};
 
-  async function signAndSend(toOnChain,amount,payloadHex){
+  async function signAndSend(toOnChain,amount,payloadHex,gasLimit){gasLimit=gasLimit||21000;
     const nonceRes=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getAccountNonce',params:[wallet.onChain,'',-1]})}).then(r=>r.json());
     if(nonceRes.error)throw new Error(nonceRes.error.message);
     const nonce=(nonceRes.result||0)+1;
@@ -394,7 +394,7 @@ async function loadHistory(){
     const sig=secp.signSync(h2b(hh),h2b(wallet.privKey),{recovered:true,der:false});
     const sb=new Uint8Array(sig[0].length+1);sb.set(sig[0]);sb[sb.length-1]=sig[1];
     let bin='';for(let i=0;i<sb.length;i++)bin+=String.fromCharCode(sb[i]);
-    const res=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_addTx',params:[{Data:{Type:0,From:wallet.onChain,To:toOnChain,Amount:amount,AccountNonce:nonce,GasPrice:1,GasLimit:21000,Timestamp:0,Payload:payloadHex||'0x'},Hash:'0x'+hh,Signature:{Sig:btoa(bin),Pubkey:''}}]})}).then(r=>r.json());
+    const res=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_addTx',params:[{Data:{Type:0,From:wallet.onChain,To:toOnChain,Amount:amount,AccountNonce:nonce,GasPrice:1,GasLimit:gasLimit,Timestamp:0,Payload:payloadHex||'0x'},Hash:'0x'+hh,Signature:{Sig:btoa(bin),Pubkey:''}}]})}).then(r=>r.json());
     if(res.error)throw new Error(res.error.message);
     return res.result;
   }
@@ -421,17 +421,43 @@ async function loadHistory(){
     const to=document.getElementById('to').value.trim();
     const amt=parseFloat(document.getElementById('amt').value);
     if(!to||!amt){alert('Fill all fields');return;}
+    const tokenSel=document.getElementById('send-token');
+    const selectedToken=tokenSel.value;
+    const isToken=selectedToken!=='SCDO';
+    let sym='SCDO';
+    if(isToken){
+      const t=tokens.find(x=>x.contract===selectedToken);
+      if(t)sym=t.sym;
+    }
     document.getElementById('cf-to').textContent=to;
-    document.getElementById('cf-amt').textContent=amt+' SCDO';
+    document.getElementById('cf-amt').textContent=amt+' '+sym;
     document.getElementById('confirm-overlay').classList.add('show');
     document.getElementById('cf-ok').onclick=async function(){
       document.getElementById('confirm-overlay').classList.remove('show');
+      const btn=document.getElementById('btn-send');
+      btn.disabled=true;btn.textContent='Sending...';
       try{
-        const toOnChain='0x'+to.substring(to.indexOf('S')+1);
-        const hash=await signAndSend(toOnChain,Math.floor(amt*1e8));
-        saveTx({to:to,from:wallet.human,amount:amt,time:Date.now(),hash:hash||''});
-        alert('Sent!');loadBalance();
+        let hash;
+        if(isToken){
+          const t=tokens.find(x=>x.contract===selectedToken);
+          const toOnChain='0x'+to.substring(to.indexOf('S')+1);
+          const paddedTo=toOnChain.replace('0x','').padStart(64,'0');
+          const rawAmt=Math.floor(amt*Math.pow(10,t.decimals||6));
+          const paddedAmt=rawAmt.toString(16).padStart(64,'0');
+          const data='0xa9059cbb'+paddedTo+paddedAmt;
+          const contractOnChain=selectedToken.startsWith('0x')?selectedToken:'0x'+selectedToken.substring(selectedToken.indexOf('S')+1);
+          hash=await signAndSend(contractOnChain,0,data,100000);
+          saveTx({to:to,from:wallet.human,amount:amt+' '+t.sym,time:Date.now(),hash:hash||''});
+          alert('Sent '+amt+' '+t.sym+'!');
+          loadTokens();
+        }else{
+          const toOnChain='0x'+to.substring(to.indexOf('S')+1);
+          hash=await signAndSend(toOnChain,Math.floor(amt*1e8),'0x',21000);
+          saveTx({to:to,from:wallet.human,amount:amt,time:Date.now(),hash:hash||''});
+          alert('Sent!');loadBalance();
+        }
       }catch(e){alert('Error: '+e.message);}
+      finally{btn.disabled=false;btn.textContent='Send';}
     };
     document.getElementById('cf-cancel').onclick=function(){document.getElementById('confirm-overlay').classList.remove('show');};
   };
