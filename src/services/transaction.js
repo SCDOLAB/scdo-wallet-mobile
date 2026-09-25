@@ -1,6 +1,7 @@
 import * as secp from '@noble/secp256k1';
 import { keccak_256 } from 'js-sha3';
 import { rpc, getNonce, getShardFromAddress, TOKENS } from './scdo';
+import { humanToOnChain } from './wallet';
 
 function hexToBytes(hex) {
   hex = hex.replace('0x', '');
@@ -67,11 +68,6 @@ function bytesToBase64(bytes) {
   return result;
 }
 
-// Convert SCDO human address (1S...) to 0x format for transaction RLP
-function toTxAddr(addr) {
-  return '0x' + addr.slice(2);
-}
-
 async function sendWithRetry(shardId, txData, privKeyBytes, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -116,8 +112,8 @@ export async function sendSCDO(privateKeyHex, fromAddress, toAddress, amountSCDO
 
   const txData = {
     Type: 0,
-    From: toTxAddr(fromAddress),
-    To: toTxAddr(toAddress),
+    From: humanToOnChain(fromAddress),
+    To: humanToOnChain(toAddress),
     Amount: Math.floor(parseFloat(amountSCDO) * 1e8),
     AccountNonce: nonce,
     GasPrice: 1,
@@ -135,14 +131,14 @@ export async function sendToken(privateKeyHex, fromAddress, toAddress, amountTok
   const nonce = chainNonce + 1;
   const shard = getShardFromAddress(contractAddress);
 
-  const toTokenAddr = toTxAddr(toAddress).slice(2);
+  const toTokenAddr = humanToOnChain(toAddress).slice(2);
   const amountHex = Math.floor(parseFloat(amountToken) * 1e8).toString(16).padStart(64, '0');
   const payload = '0xa9059cbb' + toTokenAddr.padStart(64, '0') + amountHex;
 
   const txData = {
     Type: 0,
-    From: toTxAddr(fromAddress),
-    To: toTxAddr(contractAddress),
+    From: humanToOnChain(fromAddress),
+    To: humanToOnChain(contractAddress),
     Amount: 0,
     AccountNonce: nonce,
     GasPrice: 1,
