@@ -56,7 +56,7 @@ input:focus{border-color:#4CAF50}
 .kyc-pending{background:#3A351B;color:#FFC107}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#4CAF50;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:2000;display:flex;align-items:center;justify-content:center}
+.confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:2000;display:none;align-items:center;justify-content:center}.confirm-overlay.show{display:flex}
 .confirm-box{background:#1A1D24;border-radius:16px;padding:24px;max-width:360px;width:90%}
 .confirm-box h3{margin-bottom:12px;font-size:16px}
 .confirm-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #2A2D34}
@@ -407,9 +407,9 @@ try {
     if(!to||!amt){alert('Fill all fields');return;}
     document.getElementById('cf-to').textContent=to;
     document.getElementById('cf-amt').textContent=amt+' SCDO';
-    document.getElementById('confirm-overlay').classList.remove('hidden');
+    document.getElementById('confirm-overlay').classList.add('show');
     document.getElementById('cf-ok').onclick=async function(){
-      document.getElementById('confirm-overlay').classList.add('hidden');
+      document.getElementById('confirm-overlay').classList.remove('show');
       try{
         const toOnChain='0x'+to.substring(to.indexOf('S')+1);
         const hash=await signAndSend(toOnChain,Math.floor(amt*1e8));
@@ -417,7 +417,7 @@ try {
         alert('Sent!');loadBalance();
       }catch(e){alert('Error: '+e.message);}
     };
-    document.getElementById('cf-cancel').onclick=function(){document.getElementById('confirm-overlay').classList.add('hidden');};
+    document.getElementById('cf-cancel').onclick=function(){document.getElementById('confirm-overlay').classList.remove('show');};
   };
 
   if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
