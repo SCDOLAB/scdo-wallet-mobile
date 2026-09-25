@@ -366,7 +366,7 @@ async function loadHistory(){
     found.sort((a,b)=>b.time-a.time);
     el.innerHTML=found.map(t=>{
       const color=t.dir==='IN'?'#4CAF50':'#ff6b6b';
-      return `<div class="tx-item"><div><span class="tx-dir ${t.dir==='IN'?'tx-in':'tx-out'}">${t.dir}</span><div class="tx-addr" style="margin-top:4px">${t.other.substring(0,24)}...</div><div class="tx-time">${new Date(t.time).toLocaleString()}</div></div><div class="tx-amt" style="color:${color}">${t.dir==='IN'?'+':'-'}${t.amount} SCDO</div></div>`;
+      return `<div class="tx-item"><div><span class="tx-dir ${t.dir==='IN'?'tx-in':'tx-out'}">${t.dir}</span><div class="tx-addr" style="margin-top:4px">${t.other.substring(0,24)}...</div><div class="tx-time">${new Date(t.time).toLocaleString()+' '+new Date(t.time).toLocaleTimeString('en',{timeZoneName:'short'}).split(' ').pop()}</div></div><div class="tx-amt" style="color:${color}">${t.dir==='IN'?'+':'-'}${t.amount} SCDO</div></div>`;
     }).join('');
   }
 
