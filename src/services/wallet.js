@@ -47,7 +47,7 @@ export async function createWallet() {
   const privateKey = '0x' + Buffer.from(privKeyBytes).toString('hex');
   const { publicKey, address, onChainAddr } = deriveAddresses(privKeyBytes);
   await saveWallet(privateKey, publicKey, address, onChainAddr);
-  return { privateKey, publicKey, address };
+  return { privateKey, publicKey, address, onChainAddr };
 }
 
 export async function saveWallet(privateKey, publicKey, address, onChainAddr) {
