@@ -330,9 +330,9 @@ try {
     try{
       const hRes=await fetch(RPC[1],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlockHeight',params:[]})}).then(r=>r.json());
       const curHeight=hRes.result||9237739;
-      for(let h=curHeight;h>curHeight-50;h--){
+      for(let h=curHeight;h>curHeight-15;h--){
         try{
-          const bRes=await fetch(RPC[1],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlock',params:["",h,true]})}).then(r=>r.json());
+          const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),3000);const bRes=await fetch(RPC[1],{signal:ctrl.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlock',params:["",h,true]})}).then(r=>r.json());
           if(!bRes.result||!bRes.result.transactions)continue;
           const ts=bRes.result.header.CreateTimestamp*1000;
           for(const tx of bRes.result.transactions){
