@@ -108,7 +108,7 @@ input:focus{border-color:#4CAF50}
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="scan-btn" style="margin:0" onclick="startScan()">📷 Scan QR</button>
       <select id="send-token" style="margin:0;flex:1">
-        <option value="SCDO">SCDO</option>
+        <option value="SCDO">SCDO</option><option value="1S01d8685a3e2c8aedcea8768ddff50dbd0ae87151">AUDT</option>
       </select>
     </div>
     <input type="text" id="to" placeholder="To address (1S...)">
@@ -223,6 +223,7 @@ try {
   const RPC = {1:'http://192.168.50.50:8037',2:'http://192.168.50.50:8038',3:'http://192.168.50.50:8039',4:'http://192.168.50.50:8036'};
   let wallet = null;
   let tokens = JSON.parse(localStorage.getItem('scdo_tokens')||'[]');
+  if(!tokens.find(t=>t.sym==='AUDT')){tokens.push({contract:'1S01d8685a3e2c8aedcea8768ddff50dbd0ae87151',name:'AUDT Stablecoin',sym:'AUDT',decimals:6});localStorage.setItem('scdo_tokens',JSON.stringify(tokens));}
 
   function h2b(hex){hex=hex.replace('0x','');if(hex.length%2)hex='0'+hex;const r=new Uint8Array(hex.length/2);for(let i=0;i<r.length;i++)r[i]=parseInt(hex.substr(i*2,2),16);return r;}
   function b2h(b){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');}
