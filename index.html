@@ -218,10 +218,10 @@ try {
   }
   function hmacSha256Sync(key,...datas){let total=datas.reduce((a,d)=>a+d.length,0);let msg=new Uint8Array(total);let off=0;datas.forEach(d=>{msg.set(d,off);off+=d.length;});if(key.length>64)key=sha256(key);let k=new Uint8Array(64);k.set(key);let ipad=new Uint8Array(64),opad=new Uint8Array(64);for(let i=0;i<64;i++){ipad[i]=k[i]^0x36;opad[i]=k[i]^0x5c;}let inner=new Uint8Array(64+msg.length);inner.set(ipad);inner.set(msg,64);let ih=sha256(inner);let outer=new Uint8Array(64+32);outer.set(opad);outer.set(ih,64);return sha256(outer);}
 
-  const secp = await import('/lib/secp.mjs');
+  const secp = await import('./lib/secp.mjs');
   secp.utils.hmacSha256Sync = hmacSha256Sync;
   secp.utils.sha256Sync = sha256;
-  const sha3mod = await import('/lib/sha3.mjs');
+  const sha3mod = await import('./lib/sha3.mjs');
   const keccak_256 = sha3mod.default.keccak_256;
 
   const RPC = {1:'http://192.168.50.50:8037',2:'http://192.168.50.50:8038',3:'http://192.168.50.50:8039',4:'http://192.168.50.50:8036'};
