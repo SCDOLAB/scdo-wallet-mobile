@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Test2</title></head>
+<body>
+<div id="out">loading...</div>
+<script type="module">
+try {
+  const s = await import('/lib/secp.mjs');
+  const sh = await import('/lib/sha3.mjs');
+  document.getElementById('out').textContent = 'secp ok, sha3 keys: ' + Object.keys(sh).join(',') + ' default: ' + Object.keys(sh.default||{}).join(',');
+} catch(e) {
+  document.getElementById('out').textContent = 'ERROR: ' + e.message + '\n' + e.stack;
+}
+</script>
+</body>
+</html>

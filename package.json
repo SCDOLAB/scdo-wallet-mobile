@@ -1,39 +1,18 @@
 {
-  "name": "scdo-wallet-mobile",
+  "name": "scdo-wallet-web",
   "version": "1.0.0",
-  "main": "node_modules/expo/AppEntry.js",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@expo/vector-icons": "^15.1.1",
-    "@noble/hashes": "^2.4.0",
-    "@noble/secp256k1": "^1.7.1",
-    "@react-native-async-storage/async-storage": "2.2.0",
-    "@react-navigation/native": "^6.1.0",
-    "@react-navigation/native-stack": "^6.9.0",
     "buffer": "^6.0.3",
-    "expo": "^57.0.0",
-    "expo-camera": "^57.0.5",
-    "expo-secure-store": "~57.0.4",
-    "expo-status-bar": "~57.0.1",
-    "js-sha256": "^1.0.0",
-    "js-sha3": "^0.13.0",
-    "react": "19.2.3",
-    "react-native": "0.86.3",
-    "react-native-get-random-values": "~1.11.0",
-    "react-native-keychain": "^8.2.0",
-    "react-native-qrcode-svg": "^6.3.26",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0",
-    "react-native-svg": "^15.15.5",
+    "keccak": "^3.0.4",
     "rlp": "^3.0.0",
-    "scdo.js": "file:../scdo.js-master"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.20.0"
-  },
-  "private": true
+    "secp256k1": "^4.0.3"
+  }
 }

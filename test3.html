@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Test3</title></head>
+<body>
+<pre id="out">loading...</pre>
+<script type="module">
+try {
+  const secp = await import('/lib/secp.mjs');
+  const sha3mod = await import('/lib/sha3.mjs');
+  const keccak_256 = sha3mod.default.keccak_256;
+  const out = document.getElementById('out');
+  out.textContent = 'libs loaded\n';
+
+  function h2b(hex){hex=hex.replace('0x','');if(hex.length%2)hex='0'+hex;var r=new Uint8Array(hex.length/2);for(var i=0;i<r.length;i++)r[i]=parseInt(hex.substr(i*2,2),16);return r;}
+  function b2h(b){return Array.from(b).map(function(x){return x.toString(16).padStart(2,'0')}).join('');}
+
+  // Generate key
+  const priv = secp.utils.randomPrivateKey();
+  out.textContent += 'priv: ' + b2h(priv) + '\n';
+
+  const pub = secp.getPublicKey(priv, false);
+  out.textContent += 'pub len: ' + pub.length + '\n';
+
+  const pubRaw = pub.slice(1);
+  out.textContent += 'pubRaw len: ' + pubRaw.length + '\n';
+
+  const rlpPub = new Uint8Array([0xb8,0x40, ...pubRaw]);
+  const hashHex = keccak_256(rlpPub);
+  out.textContent += 'hash: ' + hashHex + '\n';
+
+  const addr = h2b(hashHex).slice(-20);
+  addr[0] = 1;
+  addr[19] = (addr[19] & 0xF0) | 1;
+  out.textContent += 'address: 1S' + b2h(addr) + '\n';
+} catch(e) {
+  document.getElementById('out').textContent = 'ERROR: ' + e.message + '\n' + e.stack;
+}
+</script>
+</body>
+</html>
