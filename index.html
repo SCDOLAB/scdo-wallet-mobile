@@ -323,10 +323,14 @@ try {
   }
 
   function saveTx(tx){let h=JSON.parse(localStorage.getItem('scdo_tx_hist')||'[]');h.unshift(tx);localStorage.setItem('scdo_tx_hist',JSON.stringify(h.slice(0,50)));}
-  async function loadHistory(){
+  function toHuman(addr){if(!addr)return '';if(addr.startsWith('0x'))return '1S'+addr.substring(4);return addr;}
+async function loadHistory(){
     const el=document.getElementById('tx-list');
-    el.innerHTML='<p style="color:#555;font-size:13px;text-align:center;padding:20px 0"><span class="spinner"></span> Scanning...</p>';
-    const myAddr=wallet.human;const found=[];
+    el.innerHTML='<p style="color:#555;font-size:13px;text-align:center;padding:20px 0"><span class="spinner"></span> Scanning blocks...</p>';
+    const myAddr=wallet.human;
+    const myOnChain='0x'+myAddr.substring(myAddr.indexOf('S')+1);
+    const found=[];
+    const seen={};
     try{
       const hRes=await fetch(RPC[1],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlockHeight',params:[]})}).then(r=>r.json());
       const curHeight=hRes.result||9237739;
@@ -336,16 +340,23 @@ try {
           if(!bRes.result||!bRes.result.transactions)continue;
           const ts=bRes.result.header.CreateTimestamp*1000;
           for(const tx of bRes.result.transactions){
-            if(tx.from===myAddr||tx.to===myAddr){
-              const dir=tx.to===myAddr?'IN':'OUT';
-              found.push({dir,other:dir==='IN'?tx.from:tx.to,amount:(tx.amount/1e8).toFixed(8),time:ts,hash:tx.hash||''});
+            const fromH=toHuman(tx.from),toH=toHuman(tx.to);
+            if(fromH===myAddr||toH===myAddr){
+              const hash=tx.hash||('b'+h+':'+tx.from+tx.to+tx.amount);
+              if(seen[hash])continue;seen[hash]=1;
+              const dir=toH===myAddr?'IN':'OUT';
+              found.push({dir,other:dir==='IN'?fromH:toH,amount:(tx.amount/1e8).toFixed(8),time:ts,hash:hash});
             }
           }
         }catch(e){}
       }
     }catch(e){}
     const localHist=JSON.parse(localStorage.getItem('scdo_tx_hist')||'[]');
-    localHist.forEach(t=>{const dir=t.to===myAddr?'IN':'OUT';found.push({dir,other:dir==='IN'?t.from:t.to,amount:t.amount,time:t.time,hash:t.hash||''});});
+    localHist.forEach(t=>{
+      const dir=t.to===myAddr?'IN':'OUT';
+      const amt=typeof t.amount==='number'?t.amount.toFixed(8):t.amount;
+      found.push({dir,other:dir==='IN'?t.from:t.to,amount:amt,time:t.time,hash:t.hash||'local'});
+    });
     if(!found.length){el.innerHTML='<p style="color:#555;font-size:13px;text-align:center;padding:20px 0">No transactions found</p>';return;}
     found.sort((a,b)=>b.time-a.time);
     el.innerHTML=found.map(t=>{
